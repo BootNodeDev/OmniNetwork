@@ -25,6 +25,9 @@ contract OmniNetworkEscrow is Ownable {
     uint256 totalClaimedWallets;
   }
 
+  event TokenListed(address indexed token);
+  event TokenCollected(address indexed token, address indexed walletAddress);
+
   EnumerableMap.UintToAddressMap private listedTokens;
   mapping(address token => XERC20Listing) public listings;
 
@@ -70,7 +73,7 @@ contract OmniNetworkEscrow is Ownable {
     // set token as listed
     listedTokens.set(listedTokens.length(), _token);
 
-    // TODO emit event
+    emit TokenListed(_token);
   }
 
   /**
@@ -99,7 +102,7 @@ contract OmniNetworkEscrow is Ownable {
     claimedWallets[_token][msg.sender] = block.timestamp;
     IXERC20(_token).mint(msg.sender, listings[_token].totalClaimable);
 
-    // TODO emit event
+    emit TokenCollected(_token, msg.sender);
   }
 
   /**
