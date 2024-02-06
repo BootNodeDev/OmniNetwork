@@ -5,42 +5,47 @@ import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/utils/structs/EnumerableMap.sol';
 import '../interfaces/IXERC20.sol';
 
 // TODO make it upgradeable
 contract OmniNetworkEscrow is Ownable {
+  using EnumerableMap for EnumerableMap.UintToAddressMap;
+
   error OmniEscrow_AlreadyListed();
   error OmniEscrow_DeadlineMustBeInTheFuture();
   error OmniEscrow_TotalClaimableBiggerThanZero();
   error OmniEscrow_AlreadyClaimed();
+  error OmniEscrow_NFTGatedBalanceIsZero();
 
   struct XERC20Listing {
-    IXERC20 token;
     uint256 claimDeadline;
     uint256 totalClaimable;
     address nftGated;
   }
 
-  mapping(address => XERC20Listing) listings;
+  mapping(address => XERC20Listing) public listings;
+  EnumerableMap.UintToAddressMap private listedTokens;
+
   // token => address => timestamp
-  mapping(address => mapping(address => uint256)) claimedWallets;
+  mapping(address => mapping(address => uint256)) public claimedWallets;
 
   /**
-   * @notice Lists a XERC20 token
+   * @notice Lists a token
    * @dev Can only be called by the owner
    * @param _token The address of the XERC20 token
    * @param _claimDeadline The deadline for claiming the tokens
    * @param _totalClaimable The total amount of tokens that can be claimed
    * @param _nftGated The address of the NFT that is required to claim the tokens (can be zeroAddress if no NFT is required)
    */
-  function listXERC20Token(
+  function listToken(
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
     address _nftGated
   ) public onlyOwner {
     // check if already listed
-    if (listings[_token].token != IXERC20(address(0))) {
+    if (listings[_token].totalClaimable != uint256(0)) {
       revert OmniEscrow_AlreadyListed();
     }
 
@@ -54,12 +59,12 @@ contract OmniNetworkEscrow is Ownable {
       revert OmniEscrow_TotalClaimableBiggerThanZero();
     }
 
-    listings[_token] = XERC20Listing({
-      token: IXERC20(_token),
-      claimDeadline: _claimDeadline,
-      totalClaimable: _totalClaimable,
-      nftGated: _nftGated
-    });
+    // create listing
+    listings[_token] =
+      XERC20Listing({claimDeadline: _claimDeadline, totalClaimable: _totalClaimable, nftGated: _nftGated});
+
+    // set token as listed
+    listedTokens.set(listedTokens.length(), _token);
 
     // TODO emit event
   }
@@ -81,14 +86,31 @@ contract OmniNetworkEscrow is Ownable {
 
     // check if the caller has the required NFT
     if (listings[_token].nftGated != address(0)) {
-      require(
-        ERC721(listings[_token].nftGated).balanceOf(msg.sender) > 0, 'OmniEscrow: caller does not have the required NFT'
-      );
+      if (ERC721(listings[_token].nftGated).balanceOf(msg.sender) > 0) {
+        revert OmniEscrow_NFTGatedBalanceIsZero();
+      }
     }
 
     claimedWallets[_token][msg.sender] = block.timestamp;
-    ERC20(_token).transfer(msg.sender, listings[_token].totalClaimable);
+    IXERC20(_token).mint(msg.sender, listings[_token].totalClaimable);
 
     // TODO emit event
+  }
+
+  /**
+   * @notice Returns the address of the token at the specified index
+   * @param _index The index of the token
+   * @return The address of the token
+   */
+  function getTokenAtIndex(uint256 _index) public view returns (address) {
+    return listedTokens.get(_index);
+  }
+
+  /**
+   * @notice Returns the number of listed tokens
+   * @return The number of listed tokens
+   */
+  function getListingCount() public view returns (uint256) {
+    return listedTokens.length();
   }
 }
