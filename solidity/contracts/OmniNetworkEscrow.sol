@@ -25,11 +25,10 @@ contract OmniNetworkEscrow is Ownable {
     uint256 totalClaimedWallets;
   }
 
-  mapping(address => XERC20Listing) public listings;
   EnumerableMap.UintToAddressMap private listedTokens;
+  mapping(address token => XERC20Listing) public listings;
 
-  // token => address => timestamp
-  mapping(address => mapping(address => uint256)) public claimedWallets;
+  mapping(address token => mapping(address walletAddress => uint256 timestamp)) public claimedWallets;
 
   /**
    * @notice Lists a token
