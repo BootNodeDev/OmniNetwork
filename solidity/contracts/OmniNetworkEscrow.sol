@@ -22,6 +22,7 @@ contract OmniNetworkEscrow is Ownable {
     uint256 claimDeadline;
     uint256 totalClaimable;
     address nftGated;
+    uint256 totalClaimedWallets;
   }
 
   mapping(address => XERC20Listing) public listings;
@@ -60,8 +61,12 @@ contract OmniNetworkEscrow is Ownable {
     }
 
     // create listing
-    listings[_token] =
-      XERC20Listing({claimDeadline: _claimDeadline, totalClaimable: _totalClaimable, nftGated: _nftGated});
+    listings[_token] = XERC20Listing({
+      claimDeadline: _claimDeadline,
+      totalClaimable: _totalClaimable,
+      nftGated: _nftGated,
+      totalClaimedWallets: uint256(0)
+    });
 
     // set token as listed
     listedTokens.set(listedTokens.length(), _token);
@@ -91,6 +96,7 @@ contract OmniNetworkEscrow is Ownable {
       }
     }
 
+    listings[_token].totalClaimedWallets += 1;
     claimedWallets[_token][msg.sender] = block.timestamp;
     IXERC20(_token).mint(msg.sender, listings[_token].totalClaimable);
 
