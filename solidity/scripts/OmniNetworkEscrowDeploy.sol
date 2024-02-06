@@ -9,6 +9,10 @@ import {ScriptingLibrary} from "./ScriptingLibrary/ScriptingLibrary.sol";
 
 contract OmniNetworkEscrowDeploy is Script, ScriptingLibrary {
     function run() public {
+        vm.createSelectFork(vm.rpcUrl(vm.envString("SEPOLIA_RPC")));
+
+        console.log(vm.envString("SEPOLIA_RPC"));
+
         OmniNetworkEscrow _escrow = new OmniNetworkEscrow();
 
         // solhint-disable-next-line no-console
