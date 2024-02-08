@@ -29,7 +29,7 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', 'injective-protocol', _owner);
+    _xerc20 = new XERC20('Test', 'TST', _owner);
     _escrow = new OmniNetworkEscrow();
     _xerc20.setLimits(address(_escrow), 100, 100);
     vm.stopPrank();
