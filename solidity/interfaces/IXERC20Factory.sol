@@ -46,6 +46,7 @@ interface IXERC20Factory {
    * @dev _limits and _minters must be the same length
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _logo Logo to be used for the token
    * @param _minterLimits The array of minter limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of burning limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
@@ -55,6 +56,7 @@ interface IXERC20Factory {
   function deployXERC20(
     string memory _name,
     string memory _symbol,
+    string memory _logo,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges

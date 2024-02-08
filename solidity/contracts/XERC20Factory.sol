@@ -30,20 +30,21 @@ contract XERC20Factory is IXERC20Factory {
    * @dev _limits and _minters must be the same length
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _logo Logo to be used for the token
    * @param _minterLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of bridges that you are adding (optional, can be an empty array)
    * @return _xerc20 The address of the xerc20
    */
-
   function deployXERC20(
     string memory _name,
     string memory _symbol,
+    string memory _logo,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges
   ) external returns (address _xerc20) {
-    _xerc20 = _deployXERC20(_name, _symbol, _minterLimits, _burnerLimits, _bridges);
+    _xerc20 = _deployXERC20(_name, _symbol, _logo, _minterLimits, _burnerLimits, _bridges);
 
     emit XERC20Deployed(_xerc20);
   }
@@ -80,15 +81,16 @@ contract XERC20Factory is IXERC20Factory {
    * @dev _limits and _minters must be the same length
    * @param _name The name of the token
    * @param _symbol The symbol of the token
+   * @param _logo Logo to be used for the token
    * @param _minterLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _burnerLimits The array of limits that you are adding (optional, can be an empty array)
    * @param _bridges The array of burners that you are adding (optional, can be an empty array)
    * @return _xerc20 The address of the xerc20
    */
-
   function _deployXERC20(
     string memory _name,
     string memory _symbol,
+    string memory _logo,
     uint256[] memory _minterLimits,
     uint256[] memory _burnerLimits,
     address[] memory _bridges
@@ -97,9 +99,9 @@ contract XERC20Factory is IXERC20Factory {
     if (_minterLimits.length != _bridgesLength || _burnerLimits.length != _bridgesLength) {
       revert IXERC20Factory_InvalidLength();
     }
-    bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol, msg.sender));
+    bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol, _logo, msg.sender));
     bytes memory _creation = type(XERC20).creationCode;
-    bytes memory _bytecode = abi.encodePacked(_creation, abi.encode(_name, _symbol, address(this)));
+    bytes memory _bytecode = abi.encodePacked(_creation, abi.encode(_name, _symbol, _logo, address(this)));
 
     _xerc20 = CREATE3.deploy(_salt, _bytecode, 0);
 

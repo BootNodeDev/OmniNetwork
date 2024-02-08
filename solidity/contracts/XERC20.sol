@@ -23,6 +23,11 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   address public lockbox;
 
   /**
+   * @notice The URL/ID of the logo for the token
+   */
+  string public logo;
+
+  /**
    * @notice Maps bridge address to bridge configurations
    */
   mapping(address => Bridge) public bridges;
@@ -33,10 +38,17 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    * @param _name The name of the token
    * @param _symbol The symbol of the token
    * @param _factory The factory which deployed this contract
+   *  @param _logo Logo to be used for the token
    */
 
-  constructor(string memory _name, string memory _symbol, address _factory) ERC20(_name, _symbol) ERC20Permit(_name) {
+  constructor(
+    string memory _name,
+    string memory _symbol,
+    string memory _logo,
+    address _factory
+  ) ERC20(_name, _symbol) ERC20Permit(_name) {
     _transferOwnership(_factory);
+    logo = _logo;
     FACTORY = _factory;
   }
 
