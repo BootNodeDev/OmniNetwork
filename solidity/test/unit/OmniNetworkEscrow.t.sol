@@ -39,38 +39,38 @@ abstract contract Base is Test {
 contract UnitListing is Base {
   function testListingRevertIfNotOwner() public {
     vm.expectRevert('Ownable: caller is not the owner');
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
   }
 
   function testListingRevertIfAlreadyListed() public {
     vm.startPrank(_owner);
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
 
     vm.expectRevert(OmniNetworkEscrow.OmniEscrow_AlreadyListed.selector);
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
     vm.stopPrank();
   }
 
   function testListingRevertIfTimestampIsNotInTheFuture() public {
     vm.startPrank(_owner);
     vm.expectRevert(OmniNetworkEscrow.OmniEscrow_DeadlineMustBeInTheFuture.selector);
-    _escrow.listToken(address(_xerc20), block.timestamp, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp, 1, address(0), '');
     vm.stopPrank();
   }
 
   function testListingRevertIfAmountToClaimIsZero() public {
     vm.startPrank(_owner);
     vm.expectRevert(OmniNetworkEscrow.OmniEscrow_TotalClaimableBiggerThanZero.selector);
-    _escrow.listToken(address(_xerc20), block.timestamp + 1, 0, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 1, 0, address(0), '');
     vm.stopPrank();
   }
 
   function testListing() public {
     vm.startPrank(_owner);
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
     vm.stopPrank();
 
-    (uint256 claimDeadline, uint256 totalClaimable, address nftGated, uint256 totalClaimedWallets) =
+    (uint256 claimDeadline, uint256 totalClaimable, address nftGated, uint256 totalClaimedWallets,) =
       _escrow.listings(address(_xerc20));
 
     assertEq(claimDeadline, block.timestamp + 100);
@@ -86,7 +86,7 @@ contract CollectUnitTest is Base {
   function testCollectRevertIfAlreadyClaimed() public {
     vm.startPrank(_owner);
 
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
 
     vm.stopPrank();
 
@@ -104,7 +104,7 @@ contract CollectUnitTest is Base {
   function testCollectRevertExpiredWindowClaim() public {
     vm.startPrank(_owner);
 
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
 
     vm.stopPrank();
 
@@ -126,12 +126,12 @@ contract CollectUnitTest is Base {
 
     vm.startPrank(_owner);
 
-    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0));
+    _escrow.listToken(address(_xerc20), block.timestamp + 100, 1, address(0), '');
 
     vm.stopPrank();
 
     // Already listed, check the listing
-    (, uint256 totalClaimable,, uint256 totalClaimedWallets) = _escrow.listings(address(_xerc20));
+    (, uint256 totalClaimable,, uint256 totalClaimedWallets,) = _escrow.listings(address(_xerc20));
 
     // First claim
     vm.startPrank(_user);
@@ -140,7 +140,7 @@ contract CollectUnitTest is Base {
     emit TokenCollected(address(_xerc20), _user);
     _escrow.collect(address(_xerc20));
 
-    (,,, uint256 totalClaimedWalletsAfter) = _escrow.listings(address(_xerc20));
+    (,,, uint256 totalClaimedWalletsAfter,) = _escrow.listings(address(_xerc20));
 
     uint256 timestampClaim = _escrow.claimedWallets(address(_xerc20), _user);
 

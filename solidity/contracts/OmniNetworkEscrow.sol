@@ -23,6 +23,7 @@ contract OmniNetworkEscrow is Ownable {
     uint256 totalClaimable;
     address nftGated;
     uint256 totalClaimedWallets;
+    string logoId;
   }
 
   event TokenListed(address indexed token);
@@ -40,12 +41,14 @@ contract OmniNetworkEscrow is Ownable {
    * @param _claimDeadline The deadline for claiming the tokens
    * @param _totalClaimable The total amount of tokens that can be claimed
    * @param _nftGated The address of the NFT that is required to claim the tokens (can be zeroAddress if no NFT is required)
+   * @param _logoId The id of the logo
    */
   function listToken(
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
-    address _nftGated
+    address _nftGated,
+    string memory _logoId
   ) public onlyOwner {
     // check if already listed
     if (listings[_token].totalClaimable != uint256(0)) {
@@ -67,7 +70,8 @@ contract OmniNetworkEscrow is Ownable {
       claimDeadline: _claimDeadline,
       totalClaimable: _totalClaimable,
       nftGated: _nftGated,
-      totalClaimedWallets: uint256(0)
+      totalClaimedWallets: uint256(0),
+      logoId: _logoId
     });
 
     // set token as listed
