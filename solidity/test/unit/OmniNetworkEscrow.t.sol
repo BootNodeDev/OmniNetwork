@@ -4,9 +4,7 @@ pragma solidity >=0.8.4 <0.9.0;
 import {Test} from 'forge-std/Test.sol';
 import {XERC20} from '../../contracts/XERC20.sol';
 import {OmniNetworkEscrow} from '../../contracts/OmniNetworkEscrow.sol';
-import {IXERC20} from '../../interfaces/IXERC20.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import 'forge-std/console.sol';
 
 abstract contract Base is Test {
   address internal _owner = vm.addr(1);
@@ -31,7 +29,7 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20("Test", "TST", "injective-protocol", _owner);
+    _xerc20 = new XERC20('Test', 'TST', 'injective-protocol', _owner);
     _escrow = new OmniNetworkEscrow();
     _xerc20.setLimits(address(_escrow), 100, 100);
     vm.stopPrank();

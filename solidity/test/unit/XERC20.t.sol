@@ -18,7 +18,7 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', "injective-protocol", _owner);
+    _xerc20 = new XERC20('Test', 'TST', 'injective-protocol', _owner);
     vm.stopPrank();
   }
 }

@@ -55,7 +55,7 @@ contract UnitDeploy is Base {
     address[] memory _minters = new address[](0);
 
     vm.startPrank(address(_owner));
-    bytes32 _salt = keccak256(abi.encodePacked('Test', 'TST', _owner));
+    bytes32 _salt = keccak256(abi.encodePacked('Test', 'TST', 'injective-protocol', _owner));
 
     address _xerc20 = _xerc20Factory.deployXERC20('Test', 'TST', 'injective-protocol', _limits, _limits, _minters);
     vm.stopPrank();

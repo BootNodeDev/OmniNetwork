@@ -7,6 +7,7 @@ quote_style = 'single'
 number_underscore = 'thousands'
 multiline_func_header = 'params_first'
 fs_permissions = [{ access = "read-write", path = "./"}]
+ignore = ['out', 'out-via-ir', './lib']
 
 [profile.default]
 solc = '0.8.23'
