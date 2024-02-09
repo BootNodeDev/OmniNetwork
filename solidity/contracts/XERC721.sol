@@ -76,14 +76,18 @@ contract XER721 is ERC721URIStorage, Ownable, IXERC721 {
     _mintWithCaller(msg.sender, _user, _tokenId, _tokenURI);
   }
 
-  //   /**
-  //    * @notice Mints batch of non-fungible tokens to a user
-  //    * @dev Can only be called by a bridge
-  //    * @param _user The address of the user who needs tokens minted
-  //    * @param _tokenIdList The list of specific tokens to mint to a user
-  //    * @param _tokenURIList The list of metadata for each individual token
-  //    */
-  //   function mintBatch(address _user, uint256[] calldata _tokenIdList, string[] calldata _tokenURIList) external;
+  /**
+   * @notice Mints batch of non-fungible tokens to a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs tokens minted
+   * @param _tokenIdList The list of specific tokens to mint to a user
+   * @param _tokenURIList The list of metadata for each individual token
+   */
+  function mintBatch(address _user, uint256[] calldata _tokenIdList, string[] calldata _tokenURIList) external {
+    for (uint256 i = 0; i < _tokenIdList.length; i++) {
+      _mintWithCaller(msg.sender, _user, _tokenIdList[i], _tokenURIList[i]);
+    }
+  }
 
   /**
    * @notice Burns a non-fungible token for a user
@@ -95,13 +99,17 @@ contract XER721 is ERC721URIStorage, Ownable, IXERC721 {
     _burnWithCaller(msg.sender, _user, _tokenId);
   }
 
-  //    /**
-  //    * @notice Burns non-fungible tokens for a user
-  //    * @dev Can only be called by a bridge
-  //    * @param _user The address of the user who needs tokens burned
-  //    * @param _tokenIdList The list of non-fungible tokens to burn
-  //    */
-  //   function burnBatch(address _user, uint256[] calldata _tokenIdList) external;
+  /**
+   * @notice Burns non-fungible tokens for a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs tokens burned
+   * @param _tokenIdList The list of non-fungible tokens to burn
+   */
+  function burnBatch(address _user, uint256[] calldata _tokenIdList) external {
+    for (uint256 i = 0; i < _tokenIdList.length; i++) {
+      _burnWithCaller(msg.sender, _user, _tokenIdList[i]);
+    }
+  }
 
   /**
    * @notice Returns the max limit of a bridge
