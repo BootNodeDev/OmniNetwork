@@ -23,6 +23,12 @@ interface IXERC721 {
    */
   error IXERC721_NotHighEnoughLimits();
 
+  /**
+   *
+   * @notice Reverts when a bridge tries to burn a token without approval or ownership
+   */
+  error IXERC721_NotAllowedToBurn();
+
   struct Bridge {
     BridgeParameters minterParams;
     BridgeParameters burnerParams;

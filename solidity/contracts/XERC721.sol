@@ -278,7 +278,7 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
   function _burnWithCaller(address _caller, address _user, uint256 _tokenId) internal {
     // FIXME CHECK
     if (!_isApprovedOrOwner(_user, _tokenId)) {
-      revert('XERC721: caller is not owner nor approved');
+      revert IXERC721_NotAllowedToBurn();
     }
 
     if (_caller != lockbox) {
