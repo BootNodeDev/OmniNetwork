@@ -8,7 +8,7 @@ import {ERC721Enumerable} from '@openzeppelin/contracts/token/ERC721/extensions/
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
-contract XER721 is ERC721URIStorage, Ownable, IXERC721 {
+contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
   /**
    * @notice The duration it takes for the limits to fully replenish
    */
