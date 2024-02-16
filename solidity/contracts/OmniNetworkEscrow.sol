@@ -13,6 +13,7 @@ contract OmniNetworkEscrow is Ownable {
   using EnumerableMap for EnumerableMap.UintToAddressMap;
 
   error OmniEscrow_AlreadyListed();
+  error OmniEscrow_NotListed();
   error OmniEscrow_DeadlineMustBeInTheFuture();
   error OmniEscrow_TotalClaimableBiggerThanZero();
   error OmniEscrow_AlreadyClaimed();
@@ -27,6 +28,7 @@ contract OmniNetworkEscrow is Ownable {
   }
 
   event TokenListed(address indexed token);
+  event ResetCountdown(address indexed token);
   event TokenCollected(address indexed token, address indexed walletAddress);
 
   EnumerableMap.UintToAddressMap private listedTokens;
@@ -78,6 +80,28 @@ contract OmniNetworkEscrow is Ownable {
     listedTokens.set(listedTokens.length(), _token);
 
     emit TokenListed(_token);
+  }
+
+  /**
+   * @notice Reset countdown for a token
+   * @dev Can only be called by the owner
+   * @param _token The address of the XERC20 token
+   * @param _newClaimDeadline The deadline for claiming the tokens
+   */
+  function resetCountdownListToken(address _token, uint256 _newClaimDeadline) public onlyOwner {
+    // check if already listed
+    if (listings[_token].totalClaimable == uint256(0)) {
+      revert OmniEscrow_NotListed();
+    }
+
+    // check if deadline is in the future
+    if (block.timestamp >= _newClaimDeadline) {
+      revert OmniEscrow_DeadlineMustBeInTheFuture();
+    }
+
+    listings[_token].claimDeadline = _newClaimDeadline;
+
+    emit ResetCountdown(_token);
   }
 
   /**
