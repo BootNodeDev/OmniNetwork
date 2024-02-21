@@ -13,7 +13,6 @@ abstract contract Base is Test {
   XERC721 internal _xerc721;
 
   event BridgeLimitsSet(uint256 _mintingLimit, uint256 _burningLimit, address indexed _bridge);
-  event LockboxSet(address _lockbox);
   event SetLimitsDelay(uint256 _delay);
 
   function setUp() public virtual {
@@ -105,128 +104,139 @@ contract NftCreateParams is Base {
     assertEq(_xerc721.burningMaxLimitOf(_randomAddr), _amount);
   }
 
-  //   function testRevertsWithWrongCaller() public {
-  //     vm.expectRevert('Ownable: caller is not the owner');
-  //     _xerc721.setLimits(_minter, 1e18, 0);
-  //   }
+  function testRevertsWithWrongCaller() public {
+    vm.expectRevert('Ownable: caller is not the owner');
+    _xerc721.setLimits(_minter, 1e18, 0);
+  }
 
-  //   function testAddingMintersAndLimits(
-  //     uint256 _amount0,
-  //     uint256 _amount1,
-  //     uint256 _amount2,
-  //     address _user0,
-  //     address _user1,
-  //     address _user2
-  //   ) public {
-  //     vm.assume(_amount0 > 0);
-  //     vm.assume(_amount1 > 0);
-  //     vm.assume(_amount2 > 0);
+  function testAddingMintersAndLimits(
+    uint256 _amount0,
+    uint256 _amount1,
+    uint256 _amount2,
+    address _user0,
+    address _user1,
+    address _user2
+  ) public {
+    vm.assume(_amount0 > 0);
+    vm.assume(_amount1 > 0);
+    vm.assume(_amount2 > 0);
 
-  //     vm.assume(_user0 != _user1 && _user1 != _user2 && _user0 != _user2);
-  //     uint256[] memory _limits = new uint256[](3);
-  //     address[] memory _minters = new address[](3);
+    vm.assume(_user0 != _user1 && _user1 != _user2 && _user0 != _user2);
+    uint256[] memory _limits = new uint256[](3);
+    address[] memory _minters = new address[](3);
 
-  //     _limits[0] = _amount0;
-  //     _limits[1] = _amount1;
-  //     _limits[2] = _amount2;
+    _limits[0] = _amount0;
+    _limits[1] = _amount1;
+    _limits[2] = _amount2;
 
-  //     _minters[0] = _user0;
-  //     _minters[1] = _user1;
-  //     _minters[2] = _user2;
+    _minters[0] = _user0;
+    _minters[1] = _user1;
+    _minters[2] = _user2;
 
-  //     vm.startPrank(_owner);
-  //     for (uint256 _i = 0; _i < _minters.length; _i++) {
-  //       _xerc721.setLimits(_minters[_i], _limits[_i], _limits[_i]);
-  //     }
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    for (uint256 _i = 0; _i < _minters.length; _i++) {
+      _xerc721.setLimits(_minters[_i], _limits[_i], _limits[_i]);
+    }
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingMaxLimitOf(_user0), _amount0);
-  //     assertEq(_xerc721.mintingMaxLimitOf(_user1), _amount1);
-  //     assertEq(_xerc721.mintingMaxLimitOf(_user2), _amount2);
-  //     assertEq(_xerc721.burningMaxLimitOf(_user0), _amount0);
-  //     assertEq(_xerc721.burningMaxLimitOf(_user1), _amount1);
-  //     assertEq(_xerc721.burningMaxLimitOf(_user2), _amount2);
-  //   }
+    assertEq(_xerc721.mintingMaxLimitOf(_user0), _amount0);
+    assertEq(_xerc721.mintingMaxLimitOf(_user1), _amount1);
+    assertEq(_xerc721.mintingMaxLimitOf(_user2), _amount2);
+    assertEq(_xerc721.burningMaxLimitOf(_user0), _amount0);
+    assertEq(_xerc721.burningMaxLimitOf(_user1), _amount1);
+    assertEq(_xerc721.burningMaxLimitOf(_user2), _amount2);
+  }
 
-  //   function testchangeBridgeMintingLimitEmitsEvent(uint256 _limit, address _minter) public {
-  //     vm.prank(_owner);
-  //     vm.expectEmit(true, true, true, true);
-  //     emit BridgeLimitsSet(_limit, 0, _minter);
-  //     _xerc721.setLimits(_minter, _limit, 0);
-  //   }
+  function testchangeBridgeMintingLimitEmitsEvent(uint256 _limit, address _minter) public {
+    vm.prank(_owner);
+    vm.expectEmit(true, true, true, true);
+    emit BridgeLimitsSet(_limit, 0, _minter);
+    _xerc721.setLimits(_minter, _limit, 0);
+  }
 
-  //   function testchangeBridgeBurningLimitEmitsEvent(uint256 _limit, address _minter) public {
-  //     vm.prank(_owner);
-  //     vm.expectEmit(true, true, true, true);
-  //     emit BridgeLimitsSet(0, _limit, _minter);
-  //     _xerc721.setLimits(_minter, 0, _limit);
-  //   }
+  function testchangeBridgeBurningLimitEmitsEvent(uint256 _limit, address _minter) public {
+    vm.prank(_owner);
+    vm.expectEmit(true, true, true, true);
+    emit BridgeLimitsSet(0, _limit, _minter);
+    _xerc721.setLimits(_minter, 0, _limit);
+  }
 
-  //   function testSettingLimitsToUnapprovedUser(uint256 _amount) public {
-  //     vm.assume(_amount > 0);
+  function testSettingLimitsToUnapprovedUser(uint256 _amount) public {
+    vm.assume(_amount > 0);
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _amount, _amount);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, _amount, _amount);
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingMaxLimitOf(_minter), _amount);
-  //     assertEq(_xerc721.burningMaxLimitOf(_minter), _amount);
-  //   }
+    assertEq(_xerc721.mintingMaxLimitOf(_minter), _amount);
+    assertEq(_xerc721.burningMaxLimitOf(_minter), _amount);
+  }
 
-  //   function testUseLimitsUpdatesLimit(uint256 _limit, address _minter) public {
-  //     vm.assume(_limit > 1e6);
-  //     vm.assume(_minter != address(0));
-  //     vm.warp(1_683_145_698); // current timestamp at the time of testing
+  function testUseLimitsUpdatesLimit(address _minter) public {
+    vm.assume(_minter != address(0));
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, 5, 5);
+    vm.stopPrank();
 
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _limit);
-  //     _xerc721.burn(_minter, _limit);
-  //     vm.stopPrank();
+    uint256[] memory newIds = new uint256[](5);
+    newIds[0] = 6;
+    newIds[1] = 7;
+    newIds[2] = 8;
+    newIds[3] = 9;
+    newIds[4] = 10;
+    vm.startPrank(_minter);
+    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.burnBatch(_minter, newIds);
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingMaxLimitOf(_minter), _limit);
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), 0);
-  //     assertEq(_xerc721.burningMaxLimitOf(_minter), _limit);
-  //     assertEq(_xerc721.burningCurrentLimitOf(_minter), 0);
-  //   }
+    assertEq(_xerc721.mintingMaxLimitOf(_minter), 5);
+    assertEq(_xerc721.mintingCurrentLimitOf(_minter), 0);
+    assertEq(_xerc721.burningMaxLimitOf(_minter), 5);
+    assertEq(_xerc721.burningCurrentLimitOf(_minter), 0);
+  }
 
-  //   function testCurrentLimitIsMaxLimitIfUnused(uint256 _limit, address _minter) public {
-  //     uint256 _currentTimestamp = 1_683_145_698;
-  //     vm.warp(_currentTimestamp);
+  function testCurrentLimitIsMaxLimitIfUnused(uint256 _limit, address _minter) public {
+    uint256 _currentTimestamp = 1_683_145_698;
+    vm.warp(_currentTimestamp);
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, _limit, _limit);
+    vm.stopPrank();
 
-  //     vm.warp(_currentTimestamp + 12 hours);
+    vm.warp(_currentTimestamp + 12 hours);
 
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), _limit);
-  //     assertEq(_xerc721.burningCurrentLimitOf(_minter), _limit);
-  //   }
+    assertEq(_xerc721.mintingCurrentLimitOf(_minter), _limit);
+    assertEq(_xerc721.burningCurrentLimitOf(_minter), _limit);
+  }
 
-  //   function testCurrentLimitIsMaxLimitIfOver24Hours(uint256 _limit, address _minter) public {
-  //     uint256 _currentTimestamp = 1_683_145_698;
-  //     vm.warp(_currentTimestamp);
-  //     vm.assume(_minter != address(0));
+  function testCurrentLimitIsMaxLimitIfOver24Hours(address _minter) public {
+    vm.assume(_minter != address(0));
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, 5, 5);
+    vm.stopPrank();
 
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _limit);
-  //     _xerc721.burn(_minter, _limit);
-  //     vm.stopPrank();
+    uint256[] memory newIds = new uint256[](5);
+    newIds[0] = 6;
+    newIds[1] = 7;
+    newIds[2] = 8;
+    newIds[3] = 9;
+    newIds[4] = 10;
+    vm.startPrank(_minter);
+    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.burnBatch(_minter, newIds);
+    vm.stopPrank();
 
-  //     vm.warp(_currentTimestamp + 30 hours);
+    vm.warp(block.timestamp + 30 hours);
 
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), _limit);
-  //     assertEq(_xerc721.burningCurrentLimitOf(_minter), _limit);
-  //   }
+    assertEq(_xerc721.mintingMaxLimitOf(_minter), 5);
+    assertEq(_xerc721.mintingCurrentLimitOf(_minter), 5);
+    assertEq(_xerc721.burningMaxLimitOf(_minter), 5);
+    assertEq(_xerc721.burningCurrentLimitOf(_minter), 5);
+  }
 
+  // TODO test vesting discrete
   //   function testLimitVestsLinearly(uint256 _limit, address _minter) public {
   //     vm.assume(_limit > 1e6);
   //     vm.assume(_minter != address(0));
@@ -248,148 +258,109 @@ contract NftCreateParams is Base {
   //     assertApproxEqRel(_xerc721.burningCurrentLimitOf(_minter), _limit / 2, 0.1 ether);
   //   }
 
-  //   function testOverflowLimitMakesItMax(uint256 _limit, address _minter, uint256 _usedLimit) public {
-  //     _limit = bound(_limit, 1e6, 100_000_000_000_000e18);
-  //     vm.assume(_usedLimit < 1e3);
-  //     vm.assume(_minter != address(0));
-  //     uint256 _currentTimestamp = 1_683_145_698;
-  //     vm.warp(_currentTimestamp);
+  function testchangeBridgeMintingLimitIncreaseCurrentLimitByTheDifferenceItWasChanged(
+    uint256 _limit,
+    address _minter
+  ) public {
+    _limit = bound(_limit, 5, 50);
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+    vm.assume(_minter != address(0));
 
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _usedLimit);
-  //     _xerc721.burn(_minter, _usedLimit);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, _limit, _limit);
+    vm.stopPrank();
 
-  //     vm.warp(_currentTimestamp + 20 hours);
+    vm.startPrank(_minter);
+    uint256[] memory newIds = new uint256[](5);
+    newIds[0] = 6;
+    newIds[1] = 7;
+    newIds[2] = 8;
+    newIds[3] = 9;
+    newIds[4] = 10;
+    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.burnBatch(_minter, newIds);
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), _limit);
-  //     assertEq(_xerc721.burningCurrentLimitOf(_minter), _limit);
-  //   }
+    vm.startPrank(_owner);
+    // Adding 100k to the limit
+    _xerc721.setLimits(_minter, _limit + 100_000, _limit + 100_000);
+    vm.stopPrank();
 
-  //   function testchangeBridgeMintingLimitIncreaseCurrentLimitByTheDifferenceItWasChanged(
-  //     uint256 _limit,
-  //     address _minter,
-  //     uint256 _usedLimit
-  //   ) public {
-  //     vm.assume(_limit < 1e40);
-  //     vm.assume(_usedLimit < 1e3);
-  //     vm.assume(_limit > _usedLimit);
-  //     vm.assume(_minter != address(0));
-  //     uint256 _currentTimestamp = 1_683_145_698;
-  //     vm.warp(_currentTimestamp);
+    assertEq(_xerc721.mintingCurrentLimitOf(_minter), (_limit - 5) + 100_000);
+    assertEq(_xerc721.burningCurrentLimitOf(_minter), (_limit - 5) + 100_000);
+  }
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+  function testchangeBridgeMintingLimitDecreaseCurrentLimitByTheDifferenceItWasChanged(
+    uint256 _limit,
+    address _minter
+  ) public {
+    vm.assume(_limit >= 10);
+    vm.assume(_minter != address(0));
+    uint256 diffLimit = 2;
 
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _usedLimit);
-  //     _xerc721.burn(_minter, _usedLimit);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, _limit, _limit);
+    vm.stopPrank();
 
-  //     vm.startPrank(_owner);
-  //     // Adding 100k to the limit
-  //     _xerc721.setLimits(_minter, _limit + 100_000, _limit + 100_000);
-  //     vm.stopPrank();
+    vm.startPrank(_minter);
+    uint256[] memory newIds = new uint256[](5);
+    newIds[0] = 6;
+    newIds[1] = 7;
+    newIds[2] = 8;
+    newIds[3] = 9;
+    newIds[4] = 10;
+    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.burnBatch(_minter, newIds);
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), (_limit - _usedLimit) + 100_000);
-  //   }
+    vm.startPrank(_owner);
+    // Removing diffLimit to the limit
+    _xerc721.setLimits(_minter, _limit - diffLimit, _limit - diffLimit);
+    vm.stopPrank();
 
-  //   function testchangeBridgeMintingLimitDecreaseCurrentLimitByTheDifferenceItWasChanged(
-  //     uint256 _limit,
-  //     address _minter,
-  //     uint256 _usedLimit
-  //   ) public {
-  //     vm.assume(_minter != address(0));
-  //     uint256 _currentTimestamp = 1_683_145_698;
-  //     vm.warp(_currentTimestamp);
-  //     _limit = bound(_limit, 1e15, 1e40);
-  //     _usedLimit = bound(_usedLimit, 100_000, 1e9);
+    assertEq(_xerc721.mintingCurrentLimitOf(_minter), (_limit - 5) - diffLimit);
+    assertEq(_xerc721.burningCurrentLimitOf(_minter), (_limit - 5) - diffLimit);
+  }
 
-  //     vm.startPrank(_owner);
-  //     // Setting the limit at its original limit
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+  function testChangingUsedLimitsToZero(uint256 _limit) public {
+    _limit = bound(_limit, 5, 1e40);
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, _limit, _limit);
+    vm.stopPrank();
 
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _usedLimit);
-  //     _xerc721.burn(_minter, _usedLimit);
-  //     vm.stopPrank();
+    vm.startPrank(_minter);
+    uint256[] memory newIds = new uint256[](5);
+    newIds[0] = 6;
+    newIds[1] = 7;
+    newIds[2] = 8;
+    newIds[3] = 9;
+    newIds[4] = 10;
+    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.burnBatch(_minter, newIds);
+    vm.stopPrank();
 
-  //     vm.startPrank(_owner);
-  //     // Removing 100k to the limit
-  //     _xerc721.setLimits(_minter, _limit - 100_000, _limit - 100_000);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, 0, 0);
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), (_limit - _usedLimit) - 100_000);
-  //     assertEq(_xerc721.burningCurrentLimitOf(_minter), (_limit - _usedLimit) - 100_000);
-  //   }
+    assertEq(_xerc721.mintingMaxLimitOf(_minter), 0);
+    assertEq(_xerc721.mintingCurrentLimitOf(_minter), 0);
+    assertEq(_xerc721.burningMaxLimitOf(_minter), 0);
+    assertEq(_xerc721.burningCurrentLimitOf(_minter), 0);
+  }
 
-  //   function testChangingUsedLimitsToZero(uint256 _limit, uint256 _amount) public {
-  //     _limit = bound(_limit, 1, 1e40);
-  //     vm.assume(_amount < _limit);
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
+  function testRemoveBridge(uint256 _limit) public {
+    vm.assume(_limit > 0);
 
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _amount);
-  //     _xerc721.burn(_minter, _amount);
-  //     vm.stopPrank();
+    vm.startPrank(_owner);
+    _xerc721.setLimits(_minter, _limit, _limit);
 
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, 0, 0);
-  //     vm.stopPrank();
+    assertEq(_xerc721.mintingMaxLimitOf(_minter), _limit);
+    assertEq(_xerc721.burningMaxLimitOf(_minter), _limit);
+    _xerc721.setLimits(_minter, 0, 0);
+    vm.stopPrank();
 
-  //     assertEq(_xerc721.mintingMaxLimitOf(_minter), 0);
-  //     assertEq(_xerc721.mintingCurrentLimitOf(_minter), 0);
-  //     assertEq(_xerc721.burningMaxLimitOf(_minter), 0);
-  //     assertEq(_xerc721.burningCurrentLimitOf(_minter), 0);
-  //   }
-
-  //   function testSetLockbox(address _lockbox) public {
-  //     vm.prank(_owner);
-  //     _xerc721.setLockbox(_lockbox);
-
-  //     assertEq(_xerc721.lockbox(), _lockbox);
-  //   }
-
-  //   function testSetLockboxEmitsEvents(address _lockbox) public {
-  //     vm.expectEmit(true, true, true, true);
-  //     emit LockboxSet(_lockbox);
-  //     vm.prank(_owner);
-  //     _xerc721.setLockbox(_lockbox);
-  //   }
-
-  //   function testLockboxDoesntNeedMinterRights(address _lockbox) public {
-  //     vm.assume(_lockbox != address(0));
-  //     vm.prank(_owner);
-  //     _xerc721.setLockbox(_lockbox);
-
-  //     vm.startPrank(_lockbox);
-  //     _xerc721.mint(_lockbox, 10);
-  //     assertEq(_xerc721.balanceOf(_lockbox), 10);
-  //     _xerc721.burn(_lockbox, 10);
-  //     assertEq(_xerc721.balanceOf(_lockbox), 0);
-  //     vm.stopPrank();
-  //   }
-
-  //   function testRemoveBridge(uint256 _limit) public {
-  //     vm.assume(_limit > 0);
-
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-
-  //     assertEq(_xerc721.mintingMaxLimitOf(_minter), _limit);
-  //     assertEq(_xerc721.burningMaxLimitOf(_minter), _limit);
-  //     _xerc721.setLimits(_minter, 0, 0);
-  //     vm.stopPrank();
-
-  //     assertEq(_xerc721.mintingMaxLimitOf(_minter), 0);
-  //     assertEq(_xerc721.burningMaxLimitOf(_minter), 0);
-  //   }
+    assertEq(_xerc721.mintingMaxLimitOf(_minter), 0);
+    assertEq(_xerc721.burningMaxLimitOf(_minter), 0);
+  }
 }

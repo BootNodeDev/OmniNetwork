@@ -9,16 +9,6 @@ import {EnumerableSet} from '@openzeppelin/contracts/utils/structs/EnumerableSet
 contract XERC721Factory is IXERC721Factory {
   using EnumerableSet for EnumerableSet.AddressSet;
 
-  //   /**
-  //    * @notice Address of the xerc721 maps to the address of its lockbox if it has one
-  //    */
-  //   mapping(address => address) internal _lockboxRegistry;
-
-  //   /**
-  //    * @notice The set of registered lockboxes
-  //    */
-  //   EnumerableSet.AddressSet internal _lockboxRegistryArray;
-
   /**
    * @notice The set of registered XERC721 tokens
    */

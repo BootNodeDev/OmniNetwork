@@ -25,7 +25,7 @@ abstract contract Base is Test {
   event LockboxSet(address _lockbox);
   event SetLimitsDelay(uint256 _delay);
 
-  event TokenCollected(address indexed token, address indexed walletAddress);
+  event TokenCollected(address indexed token, address indexed walletAddress, uint256 timestamp);
 
   function setUp() public virtual {
     vm.startPrank(_owner);
@@ -135,9 +135,9 @@ contract CollectUnitTest is Base {
 
     // First claim
     vm.startPrank(_user);
-    vm.expectEmit(true, true, false, false);
+    vm.expectEmit(true, true, true, false);
 
-    emit TokenCollected(address(_xerc20), _user);
+    emit TokenCollected(address(_xerc20), _user, block.timestamp);
     _escrow.collect(address(_xerc20));
 
     (,,, uint256 totalClaimedWalletsAfter,) = _escrow.listings(address(_xerc20));

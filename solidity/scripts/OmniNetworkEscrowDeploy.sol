@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.4 <0.9.0;
 
-// solhint-disable-next-line no-console
 import {console} from 'forge-std/console.sol';
 import {OmniNetworkEscrow} from '../contracts/OmniNetworkEscrow.sol';
 import {Script} from 'forge-std/Script.sol';

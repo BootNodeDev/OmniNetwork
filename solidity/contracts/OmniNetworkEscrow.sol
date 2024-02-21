@@ -27,9 +27,11 @@ contract OmniNetworkEscrow is Ownable {
     string imageUrl;
   }
 
-  event TokenListed(address indexed token);
-  event ResetCountdown(address indexed token);
-  event TokenCollected(address indexed token, address indexed walletAddress);
+  event TokenListed(
+    address indexed token, uint256 claimDeadline, uint256 totalClaimable, address nftGated, string imageUrl
+  );
+  event ResetCountdown(address indexed token, uint256 newClaimDeadline);
+  event TokenCollected(address indexed token, address indexed walletAddress, uint256 timestamp);
 
   EnumerableMap.UintToAddressMap private listedTokens;
   mapping(address token => XERC20Listing) public listings;
@@ -79,7 +81,7 @@ contract OmniNetworkEscrow is Ownable {
     // set token as listed
     listedTokens.set(listedTokens.length(), _token);
 
-    emit TokenListed(_token);
+    emit TokenListed(_token, _claimDeadline, _totalClaimable, _nftGated, _imageUrl);
   }
 
   /**
@@ -89,7 +91,7 @@ contract OmniNetworkEscrow is Ownable {
    * @param _newClaimDeadline The deadline for claiming the tokens
    */
   function resetCountdownListToken(address _token, uint256 _newClaimDeadline) public onlyOwner {
-    // check if already listed
+    // check if is listed
     if (listings[_token].totalClaimable == uint256(0)) {
       revert OmniEscrow_NotListed();
     }
@@ -101,7 +103,7 @@ contract OmniNetworkEscrow is Ownable {
 
     listings[_token].claimDeadline = _newClaimDeadline;
 
-    emit ResetCountdown(_token);
+    emit ResetCountdown(_token, _newClaimDeadline);
   }
 
   /**
@@ -130,7 +132,7 @@ contract OmniNetworkEscrow is Ownable {
     claimedWallets[_token][msg.sender] = block.timestamp;
     IXERC20(_token).mint(msg.sender, listings[_token].totalClaimable);
 
-    emit TokenCollected(_token, msg.sender);
+    emit TokenCollected(_token, msg.sender, block.timestamp);
   }
 
   /**
