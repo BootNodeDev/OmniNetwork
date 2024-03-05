@@ -30,7 +30,7 @@ abstract contract Base is Test {
   function setUp() public virtual {
     vm.startPrank(_owner);
     _xerc20 = new XERC20('Test', 'TST', _owner);
-    _escrow = new OmniNetworkEscrow();
+    _escrow = new OmniNetworkEscrow(_owner);
     _xerc20.setLimits(address(_escrow), 100, 100);
     vm.stopPrank();
   }
@@ -38,7 +38,7 @@ abstract contract Base is Test {
 
 contract UnitListing is Base {
   function testListingRevertIfNotOwner() public {
-    vm.expectRevert('Ownable: caller is not the owner');
+    vm.expectRevert(OmniNetworkEscrow.AccessControl_CallerNotOwner.selector);
     _escrow.listXERC20Token(address(_xerc20), block.timestamp + 100, 1, address(0), '');
   }
 

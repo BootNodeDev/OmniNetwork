@@ -4,15 +4,18 @@ pragma solidity ^0.8.20;
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 
 import '@openzeppelin/contracts/utils/structs/EnumerableMap.sol';
 import '../interfaces/IXERC20.sol';
 import '../interfaces/IXERC721.sol';
 
-contract OmniNetworkEscrow is Ownable {
+contract OmniNetworkEscrow is AccessControl {
   using EnumerableMap for EnumerableMap.UintToAddressMap;
   using Counters for Counters.Counter;
+
+  bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
+  bytes32 public constant RELAYER_ROLE = keccak256('RELAYER_ROLE');
 
   error OmniEscrow_AlreadyListed();
   error OmniEscrow_NotListed();
@@ -20,6 +23,7 @@ contract OmniNetworkEscrow is Ownable {
   error OmniEscrow_TotalClaimableBiggerThanZero();
   error OmniEscrow_AlreadyClaimed();
   error OmniEscrow_NFTGatedBalanceIsZero();
+  error AccessControl_CallerNotOwner();
 
   struct XERC20Listing {
     uint256 claimDeadline;
@@ -52,6 +56,18 @@ contract OmniNetworkEscrow is Ownable {
   mapping(address token => XERC721Listing) public listingsXERC721;
 
   mapping(address token => mapping(address walletAddress => uint256 timestamp)) public claimedWallets;
+
+  modifier onlyOwner() {
+    if (!hasRole(OWNER_ROLE, msg.sender)) {
+      revert AccessControl_CallerNotOwner();
+    }
+    _;
+  }
+
+  constructor(address relayer) {
+    _grantRole(OWNER_ROLE, msg.sender);
+    _grantRole(RELAYER_ROLE, relayer);
+  }
 
   /**
    * @notice Lists a XERC20 token

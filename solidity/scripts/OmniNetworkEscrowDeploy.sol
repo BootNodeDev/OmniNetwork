@@ -8,12 +8,13 @@ import {ScriptingLibrary} from './ScriptingLibrary/ScriptingLibrary.sol';
 
 contract OmniNetworkEscrowDeploy is Script, ScriptingLibrary {
   uint256 public deployer = vm.envUint('DEPLOYER_PRIVATE_KEY');
+  address public deployerAddress = vm.envAddress('DEPLOYER_ADDRESS');
 
   function run() public {
     vm.createSelectFork(vm.rpcUrl(vm.envString('ETHEREUM_SEPOLIA_RPC')));
 
     vm.startBroadcast(deployer);
-    OmniNetworkEscrow _escrow = new OmniNetworkEscrow();
+    OmniNetworkEscrow _escrow = new OmniNetworkEscrow(deployerAddress);
     vm.stopBroadcast();
 
     // solhint-disable-next-line no-console
