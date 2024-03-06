@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
-import '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
-import '@openzeppelin/contracts/access/AccessControl.sol';
+import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
+import {EnumerableMap} from '@openzeppelin/contracts/utils/structs/EnumerableMap.sol';
+import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
 
-import '@openzeppelin/contracts/utils/structs/EnumerableMap.sol';
-import '../interfaces/IXERC20.sol';
-import '../interfaces/IXERC721.sol';
+import {IXERC20} from '../interfaces/IXERC20.sol';
+import {IXERC721} from '../interfaces/IXERC721.sol';
 
 contract OmniNetworkEscrow is AccessControl {
   using EnumerableMap for EnumerableMap.UintToAddressMap;
@@ -42,15 +41,15 @@ contract OmniNetworkEscrow is AccessControl {
   }
 
   event TokenListed(
-    address indexed token, uint256 claimDeadline, uint256 totalClaimable, address nftGated, string imageUrl
+    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, address _nftGated, string _imageUrl
   );
-  event ResetCountdown(address indexed token, uint256 newClaimDeadline);
-  event TokenCollected(address indexed token, address indexed walletAddress, uint256 timestamp);
+  event ResetCountdown(address indexed _token, uint256 _newClaimDeadline);
+  event TokenCollected(address indexed _token, address indexed _walletAddress, uint256 _timestamp);
 
-  bool private useNftGated = false;
+  bool private _useNftGated = false;
 
-  EnumerableMap.UintToAddressMap private listedXERC20Tokens;
-  EnumerableMap.UintToAddressMap private listedXERC721Tokens;
+  EnumerableMap.UintToAddressMap private _listedXERC20Tokens;
+  EnumerableMap.UintToAddressMap private _listedXERC721Tokens;
 
   mapping(address token => XERC20Listing) public listingsXERC20;
   mapping(address token => XERC721Listing) public listingsXERC721;
@@ -64,9 +63,9 @@ contract OmniNetworkEscrow is AccessControl {
     _;
   }
 
-  constructor(address relayer) {
+  constructor(address _relayer) {
     _grantRole(OWNER_ROLE, msg.sender);
-    _grantRole(RELAYER_ROLE, relayer);
+    _grantRole(RELAYER_ROLE, _relayer);
   }
 
   /**
@@ -110,7 +109,7 @@ contract OmniNetworkEscrow is AccessControl {
     });
 
     // set token as listed
-    listedXERC20Tokens.set(listedXERC20Tokens.length(), _token);
+    _listedXERC20Tokens.set(_listedXERC20Tokens.length(), _token);
 
     emit TokenListed(_token, _claimDeadline, _totalClaimable, _nftGated, _imageUrl);
   }
@@ -149,7 +148,7 @@ contract OmniNetworkEscrow is AccessControl {
     });
 
     // set token as listed
-    listedXERC20Tokens.set(listedXERC20Tokens.length(), _token);
+    _listedXERC20Tokens.set(_listedXERC20Tokens.length(), _token);
 
     emit TokenListed(_token, _claimDeadline, 1, _nftGated, _imageUrl);
   }
@@ -214,7 +213,7 @@ contract OmniNetworkEscrow is AccessControl {
     }
 
     // check if the caller has the required NFT
-    if (listingsXERC20[_token].nftGated != address(0) && useNftGated) {
+    if (listingsXERC20[_token].nftGated != address(0) && _useNftGated) {
       if (ERC721(listingsXERC20[_token].nftGated).balanceOf(msg.sender) > 0) {
         revert OmniEscrow_NFTGatedBalanceIsZero();
       }
@@ -243,7 +242,7 @@ contract OmniNetworkEscrow is AccessControl {
     }
 
     // check if the caller has the required NFT
-    if (listingsXERC721[_token].nftGated != address(0) && useNftGated) {
+    if (listingsXERC721[_token].nftGated != address(0) && _useNftGated) {
       if (ERC721(listingsXERC721[_token].nftGated).balanceOf(msg.sender) > 0) {
         revert OmniEscrow_NFTGatedBalanceIsZero();
       }
@@ -262,42 +261,42 @@ contract OmniNetworkEscrow is AccessControl {
   /**
    * @notice Returns the address of the token at the specified index
    * @param _index The index of the token
-   * @return The address of the token
+   * @return _xerc20AtIndex The address of the token
    */
-  function getXERC20TokenAtIndex(uint256 _index) public view returns (address) {
-    return listedXERC20Tokens.get(_index);
+  function getXERC20TokenAtIndex(uint256 _index) public view returns (address _xerc20AtIndex) {
+    return _listedXERC20Tokens.get(_index);
   }
 
   /**
    * @notice Returns the number of listed tokens
-   * @return The number of listed tokens
+   * @return _xerc20Count The number of listed tokens
    */
-  function getListingXERC20Count() public view returns (uint256) {
-    return listedXERC20Tokens.length();
+  function getListingXERC20Count() public view returns (uint256 _xerc20Count) {
+    return _listedXERC20Tokens.length();
   }
 
   /**
    * @notice Returns the address of the token at the specified index
    * @param _index The index of the token
-   * @return The address of the token
+   * @return _xerc721AtIndex The address of the token
    */
-  function getXERC721TokenAtIndex(uint256 _index) public view returns (address) {
-    return listedXERC721Tokens.get(_index);
+  function getXERC721TokenAtIndex(uint256 _index) public view returns (address _xerc721AtIndex) {
+    return _listedXERC721Tokens.get(_index);
   }
 
   /**
    * @notice Returns the number of listed tokens
-   * @return The number of listed tokens
+   * @return _xerc721Count The number of listed tokens
    */
-  function getListingXERC721Count() public view returns (uint256) {
-    return listedXERC721Tokens.length();
+  function getListingXERC721Count() public view returns (uint256 _xerc721Count) {
+    return _listedXERC721Tokens.length();
   }
 
   /**
    * @notice Set useNftGated onchain
-   * @param _useNftGated Whether to use NFT gating.
+   * @param _nftGated Whether to use NFT gating.
    */
-  function setUseNftGated(bool _useNftGated) public onlyOwner {
-    useNftGated = _useNftGated;
+  function setUseNftGated(bool _nftGated) public onlyOwner {
+    _useNftGated = _nftGated;
   }
 }

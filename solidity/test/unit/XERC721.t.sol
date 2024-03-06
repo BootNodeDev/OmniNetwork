@@ -39,10 +39,6 @@ contract NftMintBurn is Base {
     _xerc721.mint(_user, 1, '');
   }
 
-  // TODO Apply batch
-  // _amount0 = bound(_amount0, 1, 1e40);
-  // _amount1 = bound(_amount1, 1, 1e40);
-  // vm.assume(_amount1 > _amount0);
   function testBurnRevertsWhenLimitIsTooLow() public {
     vm.prank(_owner);
     _xerc721.setLimits(_user, 1, 0);
@@ -54,8 +50,6 @@ contract NftMintBurn is Base {
     vm.stopPrank();
   }
 
-  // TODO Test batch mint
-  // vm.assume(_amount > 0);
   function testMint() public {
     vm.prank(_owner);
     _xerc721.setLimits(_user, 1, 0);
@@ -65,8 +59,6 @@ contract NftMintBurn is Base {
     assertEq(_xerc721.balanceOf(_minter), 1);
   }
 
-  // TODO Test batch burn
-  // _amount = bound(_amount, 1, 1e40);
   function testBurn() public {
     vm.startPrank(_owner);
     _xerc721.setLimits(_user, 1, 1);
@@ -235,28 +227,6 @@ contract NftCreateParams is Base {
     assertEq(_xerc721.burningMaxLimitOf(_minter), 5);
     assertEq(_xerc721.burningCurrentLimitOf(_minter), 5);
   }
-
-  // TODO test vesting discrete
-  //   function testLimitVestsLinearly(uint256 _limit, address _minter) public {
-  //     vm.assume(_limit > 1e6);
-  //     vm.assume(_minter != address(0));
-  //     uint256 _currentTimestamp = 1_683_145_698;
-  //     vm.warp(_currentTimestamp);
-
-  //     vm.startPrank(_owner);
-  //     _xerc721.setLimits(_minter, _limit, _limit);
-  //     vm.stopPrank();
-
-  //     vm.startPrank(_minter);
-  //     _xerc721.mint(_minter, _limit);
-  //     _xerc721.burn(_minter, _limit);
-  //     vm.stopPrank();
-
-  //     vm.warp(_currentTimestamp + 12 hours);
-
-  //     assertApproxEqRel(_xerc721.mintingCurrentLimitOf(_minter), _limit / 2, 0.1 ether);
-  //     assertApproxEqRel(_xerc721.burningCurrentLimitOf(_minter), _limit / 2, 0.1 ether);
-  //   }
 
   function testchangeBridgeMintingLimitIncreaseCurrentLimitByTheDifferenceItWasChanged(
     uint256 _limit,

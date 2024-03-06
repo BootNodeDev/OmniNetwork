@@ -3,7 +3,6 @@ pragma solidity >=0.8.4 <0.9.0;
 
 import {IXERC721} from '../interfaces/IXERC721.sol';
 import {ERC721URIStorage} from '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
-import {ERC721Enumerable} from '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
@@ -84,8 +83,8 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
    * @param _tokenURIList The list of metadata for each individual token
    */
   function mintBatch(address _user, uint256[] calldata _tokenIdList, string[] calldata _tokenURIList) external {
-    for (uint256 i = 0; i < _tokenIdList.length; i++) {
-      _mintWithCaller(msg.sender, _user, _tokenIdList[i], _tokenURIList[i]);
+    for (uint256 _i = 0; _i < _tokenIdList.length; _i++) {
+      _mintWithCaller(msg.sender, _user, _tokenIdList[_i], _tokenURIList[_i]);
     }
   }
 
@@ -106,8 +105,8 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
    * @param _tokenIdList The list of non-fungible tokens to burn
    */
   function burnBatch(address _user, uint256[] calldata _tokenIdList) external {
-    for (uint256 i = 0; i < _tokenIdList.length; i++) {
-      _burnWithCaller(msg.sender, _user, _tokenIdList[i]);
+    for (uint256 _i = 0; _i < _tokenIdList.length; _i++) {
+      _burnWithCaller(msg.sender, _user, _tokenIdList[_i]);
     }
   }
 
