@@ -9,7 +9,7 @@
       "isNativeGasToken": false,
       "bridgeDetails": [
         {
-          "bridge": "0x5e0c9AfA19cE2EF8E9901768c73C998535BDD618",
+          "bridge": "0xf57C0f4ff755cD9e58B59dC14f007233F6334e02",
           "burnLimit": 1000e18,
           "mintLimit": 1000e18
         }
