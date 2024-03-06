@@ -148,7 +148,7 @@ contract OmniNetworkEscrow is AccessControl {
     });
 
     // set token as listed
-    _listedXERC20Tokens.set(_listedXERC20Tokens.length(), _token);
+    _listedXERC721Tokens.set(_listedXERC721Tokens.length(), _token);
 
     emit TokenListed(_token, _claimDeadline, 1, _nftGated, _imageUrl);
   }
