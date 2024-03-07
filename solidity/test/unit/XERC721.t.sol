@@ -114,16 +114,8 @@ contract NftCreateParams is Base {
     vm.assume(_amount2 > 0);
 
     vm.assume(_user0 != _user1 && _user1 != _user2 && _user0 != _user2);
-    uint256[] memory _limits = new uint256[](3);
-    address[] memory _minters = new address[](3);
-
-    _limits[0] = _amount0;
-    _limits[1] = _amount1;
-    _limits[2] = _amount2;
-
-    _minters[0] = _user0;
-    _minters[1] = _user1;
-    _minters[2] = _user2;
+    uint256[3] memory _limits = [_amount0, _amount1, _amount2];
+    address[3] memory _minters = [_user0, _user1, _user2];
 
     vm.startPrank(_owner);
     for (uint256 _i = 0; _i < _minters.length; _i++) {
@@ -172,11 +164,9 @@ contract NftCreateParams is Base {
     vm.stopPrank();
 
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 0;
-    newIds[1] = 1;
-    newIds[2] = 2;
-    newIds[3] = 3;
-    newIds[4] = 4;
+    for (uint256 i = 0; i < 5; i++) {
+      newIds[i] = i;
+    }
     vm.startPrank(_minter);
     _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
@@ -210,11 +200,9 @@ contract NftCreateParams is Base {
     vm.stopPrank();
 
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 0;
-    newIds[1] = 1;
-    newIds[2] = 2;
-    newIds[3] = 3;
-    newIds[4] = 4;
+    for (uint256 i = 0; i < 5; i++) {
+      newIds[i] = i;
+    }
     vm.startPrank(_minter);
     _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
@@ -242,11 +230,9 @@ contract NftCreateParams is Base {
 
     vm.startPrank(_minter);
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 0;
-    newIds[1] = 1;
-    newIds[2] = 2;
-    newIds[3] = 3;
-    newIds[4] = 4;
+    for (uint256 i = 0; i < 5; i++) {
+      newIds[i] = i;
+    }
     _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
@@ -274,11 +260,9 @@ contract NftCreateParams is Base {
 
     vm.startPrank(_minter);
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 0;
-    newIds[1] = 1;
-    newIds[2] = 2;
-    newIds[3] = 3;
-    newIds[4] = 4;
+    for (uint256 i = 0; i < 5; i++) {
+      newIds[i] = i;
+    }
     _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
@@ -300,11 +284,10 @@ contract NftCreateParams is Base {
 
     vm.startPrank(_minter);
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 0;
-    newIds[1] = 1;
-    newIds[2] = 2;
-    newIds[3] = 3;
-    newIds[4] = 4;
+    for (uint256 i = 0; i < 5; i++) {
+      newIds[i] = i;
+    }
+
     _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
