@@ -1,0 +1,20 @@
+{
+  "bridge": "0xf57C0f4ff755cD9e58B59dC14f007233F6334e02",
+  "burnLimit": 1000e18,
+  "governor": "0x6e4998b3bC9554E7c49B4da1c7c143F595F0B2C3",
+  "mintLimit": 1000e18,
+  "relayerAddress": "0x0000000000000000000000000000000000000000",
+  "rpcEnvName": "ETHEREUM_SEPOLIA_RPC",
+  "testXERC20": {
+    "erc20": "0x0000000000000000000000000000000000000000",
+    "factory": "0x0000000000000000000000000000000000000000",
+    "isNativeGasToken": false,
+    "name": "TestXERC20",
+    "symbol": "TST"
+  },
+  "testXERC721": {
+    "factory": "0x0000000000000000000000000000000000000000",
+    "name": "TestXERC721",
+    "symbol": "TST"
+  }
+}
