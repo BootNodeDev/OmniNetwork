@@ -3,6 +3,7 @@ pragma solidity >=0.8.4 <0.9.0;
 
 import {Test} from 'forge-std/Test.sol';
 import {XERC20} from '../../contracts/XERC20.sol';
+import {XERC20Factory} from '../../contracts/XERC20Factory.sol';
 import {OmniNetworkEscrow} from '../../contracts/OmniNetworkEscrow.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
@@ -10,6 +11,8 @@ abstract contract Base is Test {
   address internal _owner = vm.addr(1);
   address internal _user = vm.addr(2);
   address internal _minter = vm.addr(3);
+
+  XERC20Factory internal _xerc20Factory = new XERC20Factory();
 
   XERC20 internal _xerc20;
   OmniNetworkEscrow internal _escrow;
@@ -29,7 +32,13 @@ abstract contract Base is Test {
 
   function setUp() public virtual {
     vm.startPrank(_owner);
-    _xerc20 = new XERC20('Test', 'TST', _owner);
+    uint256[] memory limits = new uint256[](1);
+    limits[0] = type(uint256).max;
+
+    address[] memory bridges = new address[](1);
+    bridges[0] = address(_escrow);
+
+    _xerc20 = XERC20(_xerc20Factory.deployXERC20('Test', 'TST', limits, limits, bridges));
     _escrow = new OmniNetworkEscrow(_owner);
     _xerc20.setLimits(address(_escrow), 100, 100);
     vm.stopPrank();
@@ -70,15 +79,15 @@ contract UnitListing is Base {
     _escrow.listXERC20Token(address(_xerc20), block.timestamp + 100, 1, address(0), '');
     vm.stopPrank();
 
-    (uint256 claimDeadline, uint256 totalClaimable, address nftGated, uint256 totalClaimedWallets,) =
-      _escrow.listingsXERC20(address(_xerc20));
+    (, uint256 claimDeadline, uint256 totalClaimable, address nftGated, uint256 totalClaimedWallets,) =
+      _escrow.listedTokenDetails(address(_xerc20));
 
     assertEq(claimDeadline, block.timestamp + 100);
     assertEq(totalClaimable, 1);
     assertEq(nftGated, address(0));
     assertEq(totalClaimedWallets, 0);
 
-    assertEq(_escrow.getListingXERC20Count(), 1);
+    assertEq(_escrow.getXERC20TokenCount(), 1);
   }
 }
 
@@ -131,7 +140,7 @@ contract CollectUnitTest is Base {
     vm.stopPrank();
 
     // Already listed, check the listing
-    (, uint256 totalClaimable,, uint256 totalClaimedWallets,) = _escrow.listingsXERC20(address(_xerc20));
+    (,, uint256 totalClaimable,, uint256 totalClaimedWallets,) = _escrow.listedTokenDetails(address(_xerc20));
 
     // First claim
     vm.startPrank(_user);
@@ -140,7 +149,7 @@ contract CollectUnitTest is Base {
     emit TokenCollected(address(_xerc20), _user, block.timestamp);
     _escrow.collectXERC20(address(_xerc20));
 
-    (,,, uint256 totalClaimedWalletsAfter,) = _escrow.listingsXERC20(address(_xerc20));
+    (,,,, uint256 totalClaimedWalletsAfter,) = _escrow.listedTokenDetails(address(_xerc20));
 
     uint256 timestampClaim = _escrow.claimedWallets(address(_xerc20), _user);
 

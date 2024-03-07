@@ -36,7 +36,7 @@ contract NftMintBurn is Base {
   function testMintRevertsIfNotApprove() public {
     vm.prank(_user);
     vm.expectRevert(IXERC721.IXERC721_NotHighEnoughLimits.selector);
-    _xerc721.mint(_user, 1, '');
+    _xerc721.mint(_user, '');
   }
 
   function testBurnRevertsWhenLimitIsTooLow() public {
@@ -44,9 +44,9 @@ contract NftMintBurn is Base {
     _xerc721.setLimits(_user, 1, 0);
 
     vm.startPrank(_user);
-    _xerc721.mint(_user, 1, 'Not allowed to burn URI');
+    _xerc721.mint(_user, 'Not allowed to burn URI');
     vm.expectRevert(IXERC721.IXERC721_NotHighEnoughLimits.selector);
-    _xerc721.burn(_user, 1);
+    _xerc721.burn(_user, 0);
     vm.stopPrank();
   }
 
@@ -54,7 +54,7 @@ contract NftMintBurn is Base {
     vm.prank(_owner);
     _xerc721.setLimits(_user, 1, 0);
     vm.prank(_user);
-    _xerc721.mint(_minter, 1, '');
+    _xerc721.mint(_minter, '');
 
     assertEq(_xerc721.balanceOf(_minter), 1);
   }
@@ -66,8 +66,8 @@ contract NftMintBurn is Base {
 
     vm.startPrank(_user);
 
-    _xerc721.mint(_user, 1, '');
-    _xerc721.burn(_user, 1);
+    _xerc721.mint(_user, '');
+    _xerc721.burn(_user, 0);
     vm.stopPrank();
 
     assertEq(_xerc721.balanceOf(_user), 0);
@@ -79,7 +79,7 @@ contract NftMintBurn is Base {
 
     vm.startPrank(_owner);
     vm.expectRevert('ERC721: invalid token ID');
-    _xerc721.burn(_user, 1);
+    _xerc721.burn(_user, 0);
     vm.stopPrank();
 
     assertEq(_xerc721.balanceOf(_user), 0);
@@ -172,13 +172,13 @@ contract NftCreateParams is Base {
     vm.stopPrank();
 
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 6;
-    newIds[1] = 7;
-    newIds[2] = 8;
-    newIds[3] = 9;
-    newIds[4] = 10;
+    newIds[0] = 0;
+    newIds[1] = 1;
+    newIds[2] = 2;
+    newIds[3] = 3;
+    newIds[4] = 4;
     vm.startPrank(_minter);
-    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
 
@@ -210,13 +210,13 @@ contract NftCreateParams is Base {
     vm.stopPrank();
 
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 6;
-    newIds[1] = 7;
-    newIds[2] = 8;
-    newIds[3] = 9;
-    newIds[4] = 10;
+    newIds[0] = 0;
+    newIds[1] = 1;
+    newIds[2] = 2;
+    newIds[3] = 3;
+    newIds[4] = 4;
     vm.startPrank(_minter);
-    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
 
@@ -242,12 +242,12 @@ contract NftCreateParams is Base {
 
     vm.startPrank(_minter);
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 6;
-    newIds[1] = 7;
-    newIds[2] = 8;
-    newIds[3] = 9;
-    newIds[4] = 10;
-    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    newIds[0] = 0;
+    newIds[1] = 1;
+    newIds[2] = 2;
+    newIds[3] = 3;
+    newIds[4] = 4;
+    _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
 
@@ -274,12 +274,12 @@ contract NftCreateParams is Base {
 
     vm.startPrank(_minter);
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 6;
-    newIds[1] = 7;
-    newIds[2] = 8;
-    newIds[3] = 9;
-    newIds[4] = 10;
-    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    newIds[0] = 0;
+    newIds[1] = 1;
+    newIds[2] = 2;
+    newIds[3] = 3;
+    newIds[4] = 4;
+    _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
 
@@ -300,12 +300,12 @@ contract NftCreateParams is Base {
 
     vm.startPrank(_minter);
     uint256[] memory newIds = new uint256[](5);
-    newIds[0] = 6;
-    newIds[1] = 7;
-    newIds[2] = 8;
-    newIds[3] = 9;
-    newIds[4] = 10;
-    _xerc721.mintBatch(_minter, newIds, new string[](5));
+    newIds[0] = 0;
+    newIds[1] = 1;
+    newIds[2] = 2;
+    newIds[3] = 3;
+    newIds[4] = 4;
+    _xerc721.mintBatch(_minter, new string[](5));
     _xerc721.burnBatch(_minter, newIds);
     vm.stopPrank();
 
