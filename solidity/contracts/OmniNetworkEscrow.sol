@@ -135,16 +135,15 @@ contract OmniNetworkEscrow is AccessControl {
   }
 
   function _isXERC721Token(address _token) private view returns (bool _isXERC721) {
-    (bool _tokenURI,) = address(_token).staticcall(abi.encodeWithSignature('tokenURI(uint256)'));
-    (bool _ownerOf,) = address(_token).staticcall(abi.encodeWithSignature('ownerOf(uint256)'));
-    //(bool _setLimits,) = address(_token).staticcall(abi.encodeWithSignature('setLimits(address,uint256,uint256)'));
+    (bool _supportsInterface,) =
+      address(_token).staticcall(abi.encodeWithSignature('supportsInterface(bytes4)', type(IXERC721).interfaceId));
 
-    return _tokenURI && _ownerOf;
+    return _supportsInterface;
   }
 
   function _isXERC20Token(address _token) private view returns (bool _isXERC20) {
     (bool _decimals,) = address(_token).staticcall(abi.encodeWithSignature('decimals()'));
-    // (bool _setLimits,) = address(_token).staticcall(abi.encodeWithSignature('setLimits(address,uint256,uint256)'));
+
     return _decimals;
   }
 
