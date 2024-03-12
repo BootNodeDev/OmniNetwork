@@ -7,7 +7,7 @@
   "rpcEnvName": "ETHEREUM_SEPOLIA_RPC",
   "testXERC20": {
     "erc20": "0x0000000000000000000000000000000000000000",
-    "factory": "0x0000000000000000000000000000000000000000",
+    "factory": "0xd1419Eb907aaF9894E7b2c603d9039e9C5c7ED79",
     "isNativeGasToken": false,
     "name": "TestXERC20",
     "symbol": "TST"
