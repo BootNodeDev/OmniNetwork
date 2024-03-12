@@ -32,13 +32,13 @@ contract OmniNetworkEscrow is AccessControl {
     TokenType tokenType;
     uint256 claimDeadline;
     uint256 totalClaimable;
-    string galxeCampaingId;
+    string galxeCampaignId;
     uint256 totalClaimedWallets;
     string imageUrl;
   }
 
   event TokenListed(
-    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, string _galxeCampaingId, string _imageUrl
+    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, string _galxeCampaignId, string _imageUrl
   );
   event ResetCountdown(address indexed _token, uint256 _newClaimDeadline);
   event TokenCollected(address indexed _token, address indexed _walletAddress, uint256 _timestamp);
@@ -100,7 +100,7 @@ contract OmniNetworkEscrow is AccessControl {
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
-    string memory _galxeCampaingId,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) private {
     // check if already listed
@@ -122,7 +122,7 @@ contract OmniNetworkEscrow is AccessControl {
       tokenType: _tokenType,
       claimDeadline: _claimDeadline,
       totalClaimable: _totalClaimable,
-      galxeCampaingId: _galxeCampaingId,
+      galxeCampaignId: _galxeCampaignId,
       totalClaimedWallets: uint256(0),
       imageUrl: _imageUrl
     });
@@ -146,24 +146,24 @@ contract OmniNetworkEscrow is AccessControl {
    * @dev Can only be called by the owner
    * @param _token The address of the XERC721 token
    * @param _claimDeadline The deadline for claiming the tokens
-   * @param _galxeCampaingId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
+   * @param _galxeCampaignId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
    * @param _imageUrl The url of the logo
    */
   function listXERC721Token(
     address _token,
     uint256 _claimDeadline,
-    string memory _galxeCampaingId,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) public onlyOwner {
     if (!_isXERC721Token(_token)) {
       revert InvalidToken();
     }
 
-    _listToken(TokenType.XERC721, _token, _claimDeadline, 1, _galxeCampaingId, _imageUrl);
+    _listToken(TokenType.XERC721, _token, _claimDeadline, 1, _galxeCampaignId, _imageUrl);
 
     _xerc721Addresses.set(_xerc721Addresses.length(), _token);
 
-    emit TokenListed(_token, _claimDeadline, 1, _galxeCampaingId, _imageUrl);
+    emit TokenListed(_token, _claimDeadline, 1, _galxeCampaignId, _imageUrl);
   }
 
   /**
@@ -172,25 +172,25 @@ contract OmniNetworkEscrow is AccessControl {
    * @param _token The address of the XERC20 token
    * @param _claimDeadline The deadline for claiming the tokens
    * @param _totalClaimable The total amount of tokens that can be claimed
-   * @param _galxeCampaingId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
+   * @param _galxeCampaignId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
    * @param _imageUrl The url of the logo
    */
   function listXERC20Token(
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
-    string memory _galxeCampaingId,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) public onlyOwner {
     if (!_isXERC20Token(_token)) {
       revert InvalidToken();
     }
 
-    _listToken(TokenType.XERC20, _token, _claimDeadline, _totalClaimable, _galxeCampaingId, _imageUrl);
+    _listToken(TokenType.XERC20, _token, _claimDeadline, _totalClaimable, _galxeCampaignId, _imageUrl);
 
     _xerc20Addresses.set(_xerc20Addresses.length(), _token);
 
-    emit TokenListed(_token, _claimDeadline, _totalClaimable, _galxeCampaingId, _imageUrl);
+    emit TokenListed(_token, _claimDeadline, _totalClaimable, _galxeCampaignId, _imageUrl);
   }
 
   /**
