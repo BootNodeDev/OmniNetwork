@@ -1,3 +1,12 @@
+# Steps
+
+- Before deploying OmniNetworkEscrow, configure `config.json` with `relayerAddress` and `rpcEnvName`.
+- Update the SALT value in `Config.sol`.
+- Run the command `yarn script:DeployOmniNetworkEscrow:broadcast` to deploy OmniNetworkEscrow.
+- Take note of the address of the newly deployed contract.
+- Deploy XERC20 and XERC721 factories.
+- Update the addresses in `contracts.ts` on the UI side.
+
 # xERC20
 
 xERC20 is a standard for bridged tokens. A common interface to be used across different implementations of bridges to keep liquidity concentrated and improve user experience on-chain.
@@ -134,7 +143,7 @@ Decide on which blockchains you want to deploy your token and the initial config
     "chainDetails": [ // The chains that the xERC20 token will be deployed to.
         {
             "rpcEnvName": "ETHEREUM_GOERLI_RPC", // The name of the RPC to use. It should be added in the .env file.
-            "erc20": "0x0000000000000000000000000000000000000001", // The address of the canonical token representation for that chain. A lockbox will be deployed pairing the deployed xERC20 with the specified ERC20 1:1. address(0) in case there is non. 
+            "erc20": "0x0000000000000000000000000000000000000001", // The address of the canonical token representation for that chain. A lockbox will be deployed pairing the deployed xERC20 with the specified ERC20 1:1. address(0) in case there is non.
             "governor": "0x0000000000000000000000000000000000000002", // The owner of the xERC20.
             "isNativeGasToken": false, // True if the ERC20 token is the native gas token of the chain. Ex: ETH for ethereum or MATIC for polygon.
             "bridgeDetails": [ // The bridges to be configured for the xERC20 token on this particular chain.

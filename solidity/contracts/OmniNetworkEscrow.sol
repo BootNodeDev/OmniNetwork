@@ -24,26 +24,24 @@ contract OmniNetworkEscrow is AccessControl {
   error OmniEscrow_DeadlineMustBeInTheFuture();
   error OmniEscrow_TotalClaimableBiggerThanZero();
   error OmniEscrow_AlreadyClaimed();
-  error OmniEscrow_NFTGatedBalanceIsZero();
   error AccessControl_CallerNotOwner();
+  error AccessControl_CallerNotRelayer();
   error InvalidToken();
 
   struct Listing {
     TokenType tokenType;
     uint256 claimDeadline;
     uint256 totalClaimable;
-    address nftGated;
+    string galxeCampaignId;
     uint256 totalClaimedWallets;
     string imageUrl;
   }
 
   event TokenListed(
-    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, address _nftGated, string _imageUrl
+    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, string _galxeCampaignId, string _imageUrl
   );
   event ResetCountdown(address indexed _token, uint256 _newClaimDeadline);
   event TokenCollected(address indexed _token, address indexed _walletAddress, uint256 _timestamp);
-
-  bool private _useNftGated = false;
 
   // To iterate over the list of addresses and also distinguish between XERC20 and XERC721
   // we use two different maps, one for each type of token.
@@ -81,13 +79,9 @@ contract OmniNetworkEscrow is AccessControl {
     _;
   }
 
-  modifier checkNftGating(address _token) {
-    address _nftGate = listedTokenDetails[_token].nftGated;
-
-    if (_nftGate != address(0) && _useNftGated) {
-      if (ERC721(_nftGate).balanceOf(msg.sender) == 0) {
-        revert OmniEscrow_NFTGatedBalanceIsZero();
-      }
+  modifier onlyRelayer() {
+    if (!hasRole(RELAYER_ROLE, msg.sender)) {
+      revert AccessControl_CallerNotRelayer();
     }
     _;
   }
@@ -106,7 +100,7 @@ contract OmniNetworkEscrow is AccessControl {
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
-    address _nftGated,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) private {
     // check if already listed
@@ -128,7 +122,7 @@ contract OmniNetworkEscrow is AccessControl {
       tokenType: _tokenType,
       claimDeadline: _claimDeadline,
       totalClaimable: _totalClaimable,
-      nftGated: _nftGated,
+      galxeCampaignId: _galxeCampaignId,
       totalClaimedWallets: uint256(0),
       imageUrl: _imageUrl
     });
@@ -152,24 +146,24 @@ contract OmniNetworkEscrow is AccessControl {
    * @dev Can only be called by the owner
    * @param _token The address of the XERC721 token
    * @param _claimDeadline The deadline for claiming the tokens
-   * @param _nftGated The address of the NFT that is required to claim the tokens (can be zeroAddress if no NFT is required)
+   * @param _galxeCampaignId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
    * @param _imageUrl The url of the logo
    */
   function listXERC721Token(
     address _token,
     uint256 _claimDeadline,
-    address _nftGated,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) public onlyOwner {
     if (!_isXERC721Token(_token)) {
       revert InvalidToken();
     }
 
-    _listToken(TokenType.XERC721, _token, _claimDeadline, 1, _nftGated, _imageUrl);
+    _listToken(TokenType.XERC721, _token, _claimDeadline, 1, _galxeCampaignId, _imageUrl);
 
     _xerc721Addresses.set(_xerc721Addresses.length(), _token);
 
-    emit TokenListed(_token, _claimDeadline, 1, _nftGated, _imageUrl);
+    emit TokenListed(_token, _claimDeadline, 1, _galxeCampaignId, _imageUrl);
   }
 
   /**
@@ -178,25 +172,25 @@ contract OmniNetworkEscrow is AccessControl {
    * @param _token The address of the XERC20 token
    * @param _claimDeadline The deadline for claiming the tokens
    * @param _totalClaimable The total amount of tokens that can be claimed
-   * @param _nftGated The address of the NFT that is required to claim the tokens (can be zeroAddress if no NFT is required)
+   * @param _galxeCampaignId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
    * @param _imageUrl The url of the logo
    */
   function listXERC20Token(
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
-    address _nftGated,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) public onlyOwner {
     if (!_isXERC20Token(_token)) {
       revert InvalidToken();
     }
 
-    _listToken(TokenType.XERC20, _token, _claimDeadline, _totalClaimable, _nftGated, _imageUrl);
+    _listToken(TokenType.XERC20, _token, _claimDeadline, _totalClaimable, _galxeCampaignId, _imageUrl);
 
     _xerc20Addresses.set(_xerc20Addresses.length(), _token);
 
-    emit TokenListed(_token, _claimDeadline, _totalClaimable, _nftGated, _imageUrl);
+    emit TokenListed(_token, _claimDeadline, _totalClaimable, _galxeCampaignId, _imageUrl);
   }
 
   /**
@@ -224,10 +218,11 @@ contract OmniNetworkEscrow is AccessControl {
   /**
    * @dev Collects the specified token from the contract and transfers it to the caller.
    * @param _token The address of the token to be collected.
+   * @param _receiver The address of the token to be collected.
    */
-  function collectXERC20(address _token) public checkNftGating(_token) {
-    // check if the caller has already claimed the tokens
-    if (claimedWallets[_token][msg.sender] != uint256(0)) {
+  function collectXERC20(address _token, address _receiver) public onlyRelayer {
+    // check if the receiver has already claimed the tokens
+    if (claimedWallets[_token][_receiver] != uint256(0)) {
       revert OmniEscrow_AlreadyClaimed();
     }
 
@@ -237,20 +232,21 @@ contract OmniNetworkEscrow is AccessControl {
     }
 
     listedTokenDetails[_token].totalClaimedWallets += 1;
-    claimedWallets[_token][msg.sender] = block.timestamp;
+    claimedWallets[_token][_receiver] = block.timestamp;
 
-    IXERC20(_token).mint(msg.sender, listedTokenDetails[_token].totalClaimable);
+    IXERC20(_token).mint(_receiver, listedTokenDetails[_token].totalClaimable);
 
-    emit TokenCollected(_token, msg.sender, block.timestamp);
+    emit TokenCollected(_token, _receiver, block.timestamp);
   }
 
   /**
    * @dev Collects the specified token from the contract and transfers it to the caller.
    * @param _token The address of the token to be collected.
+   * @param _receiver The address of the token to be collected.
    */
-  function collectXERC721(address _token) public checkNftGating(_token) {
-    // check if the caller has already claimed the tokens
-    if (claimedWallets[_token][msg.sender] != uint256(0)) {
+  function collectXERC721(address _token, address _receiver) public onlyRelayer {
+    // check if the receiver has already claimed the tokens
+    if (claimedWallets[_token][_receiver] != uint256(0)) {
       revert OmniEscrow_AlreadyClaimed();
     }
 
@@ -259,12 +255,12 @@ contract OmniNetworkEscrow is AccessControl {
       revert OmniEscrow_DeadlineMustBeInTheFuture();
     }
 
-    IXERC721(_token).mint(msg.sender, '');
+    IXERC721(_token).mint(_receiver, '');
 
     listedTokenDetails[_token].totalClaimedWallets += 1;
-    claimedWallets[_token][msg.sender] = block.timestamp;
+    claimedWallets[_token][_receiver] = block.timestamp;
 
-    emit TokenCollected(_token, msg.sender, block.timestamp);
+    emit TokenCollected(_token, _receiver, block.timestamp);
   }
 
   /**
@@ -299,13 +295,5 @@ contract OmniNetworkEscrow is AccessControl {
    */
   function getXERC721TokenAtIndex(uint256 _index) public view returns (address _xerc721AtIndex) {
     return _xerc721Addresses.get(_index);
-  }
-
-  /**
-   * @notice Set useNftGated onchain
-   * @param _nftGated Whether to use NFT gating.
-   */
-  function setUseNftGated(bool _nftGated) public onlyOwner {
-    _useNftGated = _nftGated;
   }
 }
