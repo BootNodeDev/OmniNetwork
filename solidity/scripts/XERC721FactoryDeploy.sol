@@ -3,13 +3,13 @@ pragma solidity >=0.8.4 <0.9.0;
 
 // solhint-disable-next-line no-console
 import {console} from 'forge-std/console.sol';
-import {XERC20Factory, IXERC20Factory} from '../contracts/XERC20Factory.sol';
+import {XERC721Factory, IXERC721Factory} from '../contracts/XERC721Factory.sol';
 import {Script} from 'forge-std/Script.sol';
 import {stdJson} from 'forge-std/StdJson.sol';
 import {ScriptingLibrary} from './ScriptingLibrary/ScriptingLibrary.sol';
 import {DeployDetails, SALT} from './Config.sol';
 
-contract XERC20FactoryDeploy is Script, ScriptingLibrary {
+contract XERC721FactoryDeploy is Script, ScriptingLibrary {
   using stdJson for string;
 
   uint256 public deployerPk = vm.envUint('DEPLOYER_PRIVATE_KEY');
@@ -24,10 +24,10 @@ contract XERC20FactoryDeploy is Script, ScriptingLibrary {
 
     vm.startBroadcast(deployerPk);
 
-    XERC20Factory _factory = new XERC20Factory{salt: _salt}();
+    XERC721Factory _factory = new XERC721Factory{salt: _salt}();
     vm.stopBroadcast();
 
     // solhint-disable-next-line no-console
-    console.log('Factory XERC20 deployed to:', address(_factory));
+    console.log('Factory XERC721 deployed to:', address(_factory));
   }
 }

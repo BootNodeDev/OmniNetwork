@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.4 <0.9.0;
 
-import {IXERC20} from '../interfaces/IXERC20.sol';
-import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
-import {ERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {IXERC721} from '../interfaces/IXERC721.sol';
+import {ERC721URIStorage} from '@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol';
 
-contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
+import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
+
+contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
+  using Counters for Counters.Counter;
+
   /**
    * @notice The duration it takes for the limits to fully replenish
    */
@@ -28,39 +32,20 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
   mapping(address => Bridge) public bridges;
 
   /**
-   * @notice Constructs the initial config of the XERC20
+   * @notice Counter to autoincrement tokenIds on minting
+   */
+  Counters.Counter private _lastTokenId;
+
+  /**
+   * @notice Constructs the initial config of the XERC721
    *
    * @param _name The name of the token
    * @param _symbol The symbol of the token
    * @param _factory The factory which deployed this contract
    */
-  constructor(string memory _name, string memory _symbol, address _factory) ERC20(_name, _symbol) ERC20Permit(_name) {
+  constructor(string memory _name, string memory _symbol, address _factory) ERC721(_name, _symbol) {
     _transferOwnership(_factory);
     FACTORY = _factory;
-  }
-
-  /**
-   * @notice Mints tokens for a user
-   * @dev Can only be called by a bridge
-   * @param _user The address of the user who needs tokens minted
-   * @param _amount The amount of tokens being minted
-   */
-  function mint(address _user, uint256 _amount) public {
-    _mintWithCaller(msg.sender, _user, _amount);
-  }
-
-  /**
-   * @notice Burns tokens for a user
-   * @dev Can only be called by a bridge
-   * @param _user The address of the user who needs tokens burned
-   * @param _amount The amount of tokens being burned
-   */
-  function burn(address _user, uint256 _amount) public {
-    if (msg.sender != _user) {
-      _spendAllowance(_user, msg.sender, _amount);
-    }
-
-    _burnWithCaller(msg.sender, _user, _amount);
   }
 
   /**
@@ -68,8 +53,7 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    *
    * @param _lockbox The address of the lockbox
    */
-  function setLockbox(address _lockbox) public {
-    if (msg.sender != FACTORY) revert IXERC20_NotFactory();
+  function setLockbox(address _lockbox) public onlyOwner {
     lockbox = _lockbox;
 
     emit LockboxSet(_lockbox);
@@ -86,6 +70,50 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
     _changeMinterLimit(_bridge, _mintingLimit);
     _changeBurnerLimit(_bridge, _burningLimit);
     emit BridgeLimitsSet(_mintingLimit, _burningLimit, _bridge);
+  }
+
+  /**
+   * @notice Mints a non-fungible token to a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user to receive the minted non-fungible token
+   * @param _tokenURI The metadata corresponding to the non-fungible token
+   */
+  function mint(address _user, string memory _tokenURI) external {
+    _mintWithCaller(msg.sender, _user, _tokenURI);
+  }
+
+  /**
+   * @notice Mints batch of non-fungible tokens to a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs tokens minted
+   * @param _tokenURIList The list of metadata for each individual token
+   */
+  function mintBatch(address _user, string[] calldata _tokenURIList) external {
+    for (uint256 _i = 0; _i < _tokenURIList.length; _i++) {
+      _mintWithCaller(msg.sender, _user, _tokenURIList[_i]);
+    }
+  }
+
+  /**
+   * @notice Burns a non-fungible token for a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs to burn the non-fungible token
+   * @param _tokenId The non-fungible token to burn
+   */
+  function burn(address _user, uint256 _tokenId) external {
+    _burnWithCaller(msg.sender, _user, _tokenId);
+  }
+
+  /**
+   * @notice Burns non-fungible tokens for a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs tokens burned
+   * @param _tokenIdList The list of non-fungible tokens to burn
+   */
+  function burnBatch(address _user, uint256[] calldata _tokenIdList) external {
+    for (uint256 _i = 0; _i < _tokenIdList.length; _i++) {
+      _burnWithCaller(msg.sender, _user, _tokenIdList[_i]);
+    }
   }
 
   /**
@@ -250,15 +278,20 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    *
    * @param _caller The caller address
    * @param _user The user address
-   * @param _amount The amount to burn
+   * @param _tokenId The tokenId to burn
    */
-  function _burnWithCaller(address _caller, address _user, uint256 _amount) internal {
+  function _burnWithCaller(address _caller, address _user, uint256 _tokenId) internal {
+    if (!_isApprovedOrOwner(_user, _tokenId)) {
+      revert IXERC721_NotAllowedToBurn();
+    }
+
     if (_caller != lockbox) {
       uint256 _currentLimit = burningCurrentLimitOf(_caller);
-      if (_currentLimit < _amount) revert IXERC20_NotHighEnoughLimits();
-      _useBurnerLimits(_caller, _amount);
+      if (_currentLimit < 1) revert IXERC721_NotHighEnoughLimits();
+      _useBurnerLimits(_caller, 1);
     }
-    _burn(_user, _amount);
+
+    _burn(_tokenId);
   }
 
   /**
@@ -266,14 +299,17 @@ contract XERC20 is ERC20, Ownable, IXERC20, ERC20Permit {
    *
    * @param _caller The caller address
    * @param _user The user address
-   * @param _amount The amount to mint
    */
-  function _mintWithCaller(address _caller, address _user, uint256 _amount) internal {
+  function _mintWithCaller(address _caller, address _user, string memory _tokenURI) internal {
     if (_caller != lockbox) {
       uint256 _currentLimit = mintingCurrentLimitOf(_caller);
-      if (_currentLimit < _amount) revert IXERC20_NotHighEnoughLimits();
-      _useMinterLimits(_caller, _amount);
+      if (_currentLimit < 1) revert IXERC721_NotHighEnoughLimits();
+      _useMinterLimits(_caller, 1);
     }
-    _mint(_user, _amount);
+
+    uint256 _newId = _lastTokenId.current();
+    _mint(_user, _newId);
+    _setTokenURI(_newId, _tokenURI);
+    _lastTokenId.increment();
   }
 }

@@ -56,7 +56,6 @@ contract XERC20Factory is IXERC20Factory {
    * @param _isNative Whether or not the base token is the native (gas) token of the chain. Eg: MATIC for polygon chain
    * @return _lockbox The address of the lockbox
    */
-
   function deployLockbox(
     address _xerc20,
     address _baseToken,

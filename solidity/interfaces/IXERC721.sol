@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.4 <0.9.0;
 
-interface IXERC20 {
+interface IXERC721 {
   /**
    * @notice Emits when a lockbox is set
    *
@@ -21,32 +21,19 @@ interface IXERC20 {
   /**
    * @notice Reverts when a user with too low of a limit tries to call mint/burn
    */
-  error IXERC20_NotHighEnoughLimits();
+  error IXERC721_NotHighEnoughLimits();
 
   /**
-   * @notice Reverts when caller is not the factory
-   */
-  error IXERC20_NotFactory();
-
-  /**
-   * @notice Contains the full minting and burning data for a particular bridge
    *
-   * @param minterParams The minting parameters for the bridge
-   * @param burnerParams The burning parameters for the bridge
+   * @notice Reverts when a bridge tries to burn a token without approval or ownership
    */
+  error IXERC721_NotAllowedToBurn();
+
   struct Bridge {
     BridgeParameters minterParams;
     BridgeParameters burnerParams;
   }
 
-  /**
-   * @notice Contains the mint or burn parameters for a bridge
-   *
-   * @param timestamp The timestamp of the last mint/burn
-   * @param ratePerSecond The rate per second of the bridge
-   * @param maxLimit The max limit of the bridge
-   * @param currentLimit The current limit of the bridge
-   */
   struct BridgeParameters {
     uint256 timestamp;
     uint256 ratePerSecond;
@@ -57,7 +44,7 @@ interface IXERC20 {
   /**
    * @notice Sets the lockbox address
    *
-   * @param _lockbox The address of the lockbox
+   * @param _lockbox The address of the lockbox (0x0 if no lockbox)
    */
   function setLockbox(address _lockbox) external;
 
@@ -71,12 +58,12 @@ interface IXERC20 {
   function setLimits(address _bridge, uint256 _mintingLimit, uint256 _burningLimit) external;
 
   /**
-   * @notice Returns the max limit of a minter
+   * @notice Returns the max limit of a bridge
    *
-   * @param _minter The minter we are viewing the limits of
-   *  @return _limit The limit the minter has
+   * @param _bridge The bridge we are viewing the limits of
+   * @return _limit The limit the bridge has
    */
-  function mintingMaxLimitOf(address _minter) external view returns (uint256 _limit);
+  function mintingMaxLimitOf(address _bridge) external view returns (uint256 _limit);
 
   /**
    * @notice Returns the max limit of a bridge
@@ -87,12 +74,12 @@ interface IXERC20 {
   function burningMaxLimitOf(address _bridge) external view returns (uint256 _limit);
 
   /**
-   * @notice Returns the current limit of a minter
+   * @notice Returns the current limit of a bridge
    *
-   * @param _minter The minter we are viewing the limits of
-   * @return _limit The limit the minter has
+   * @param _bridge The bridge we are viewing the limits of
+   * @return _limit The limit the bridge has
    */
-  function mintingCurrentLimitOf(address _minter) external view returns (uint256 _limit);
+  function mintingCurrentLimitOf(address _bridge) external view returns (uint256 _limit);
 
   /**
    * @notice Returns the current limit of a bridge
@@ -103,18 +90,34 @@ interface IXERC20 {
   function burningCurrentLimitOf(address _bridge) external view returns (uint256 _limit);
 
   /**
-   * @notice Mints tokens for a user
-   * @dev Can only be called by a minter
-   * @param _user The address of the user who needs tokens minted
-   * @param _amount The amount of tokens being minted
+   * @notice Mints a non-fungible token to a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user to receive the minted non-fungible token
+   * @param _tokenURI The metadata corresponding to the non-fungible token
    */
-  function mint(address _user, uint256 _amount) external;
+  function mint(address _user, string memory _tokenURI) external;
 
   /**
-   * @notice Burns tokens for a user
-   * @dev Can only be called by a minter
-   * @param _user The address of the user who needs tokens burned
-   * @param _amount The amount of tokens being burned
+   * @notice Mints batch of non-fungible tokens to a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs tokens minted
+   * @param _tokenURIList The list of metadata for each individual token
    */
-  function burn(address _user, uint256 _amount) external;
+  function mintBatch(address _user, string[] calldata _tokenURIList) external;
+
+  /**
+   * @notice Burns a non-fungible token for a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs to burn the non-fungible token
+   * @param _tokenId The non-fungible token to burn
+   */
+  function burn(address _user, uint256 _tokenId) external;
+
+  /**
+   * @notice Burns non-fungible tokens for a user
+   * @dev Can only be called by a bridge
+   * @param _user The address of the user who needs tokens burned
+   * @param _tokenIdList The list of non-fungible tokens to burn
+   */
+  function burnBatch(address _user, uint256[] calldata _tokenIdList) external;
 }
