@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 import {EnumerableMap} from '@openzeppelin/contracts/utils/structs/EnumerableMap.sol';
 
@@ -213,28 +212,6 @@ contract OmniNetworkEscrow is AccessControl {
     listedTokenDetails[_token].claimDeadline = _newClaimDeadline;
 
     emit ResetCountdown(_token, _newClaimDeadline);
-  }
-
-  /**
-   * @notice Reset countdown for a token
-   * @dev Can only be called by the owner
-   * @param _token The address of the XERC20 token
-   * @param _newClaimDeadline The deadline for claiming the tokens
-   */
-  function resetCountdownListToken(address _token, uint256 _newClaimDeadline) public onlyOwner {
-    // check if already listed
-    if (listings[_token].totalClaimable == uint256(0)) {
-      revert OmniEscrow_NotListed();
-    }
-
-    // check if deadline is in the future
-    if (block.timestamp >= _newClaimDeadline) {
-      revert OmniEscrow_DeadlineMustBeInTheFuture();
-    }
-
-    listings[_token].claimDeadline = _newClaimDeadline;
-
-    emit ResetCountdown(_token);
   }
 
   /**
