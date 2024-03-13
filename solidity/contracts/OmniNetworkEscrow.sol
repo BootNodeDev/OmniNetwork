@@ -4,14 +4,17 @@ pragma solidity ^0.8.20;
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {AccessControl} from '@openzeppelin/contracts/access/AccessControl.sol';
 import {EnumerableMap} from '@openzeppelin/contracts/utils/structs/EnumerableMap.sol';
-import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
 
 import {IXERC20} from '../interfaces/IXERC20.sol';
 import {IXERC721} from '../interfaces/IXERC721.sol';
 
 contract OmniNetworkEscrow is AccessControl {
   using EnumerableMap for EnumerableMap.UintToAddressMap;
-  using Counters for Counters.Counter;
+
+  enum TokenType {
+    XERC20,
+    XERC721
+  }
 
   bytes32 public constant OWNER_ROLE = keccak256('OWNER_ROLE');
   bytes32 public constant RELAYER_ROLE = keccak256('RELAYER_ROLE');
@@ -21,39 +24,52 @@ contract OmniNetworkEscrow is AccessControl {
   error OmniEscrow_DeadlineMustBeInTheFuture();
   error OmniEscrow_TotalClaimableBiggerThanZero();
   error OmniEscrow_AlreadyClaimed();
-  error OmniEscrow_NFTGatedBalanceIsZero();
   error AccessControl_CallerNotOwner();
+  error AccessControl_CallerNotRelayer();
+  error InvalidToken();
 
-  struct XERC20Listing {
+  struct Listing {
+    TokenType tokenType;
     uint256 claimDeadline;
     uint256 totalClaimable;
-    address nftGated;
+    string galxeCampaignId;
     uint256 totalClaimedWallets;
-    string imageUrl;
-  }
-
-  struct XERC721Listing {
-    uint256 claimDeadline;
-    address nftGated;
-    uint256 totalClaimedWallets;
-    Counters.Counter tokenId;
     string imageUrl;
   }
 
   event TokenListed(
-    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, address _nftGated, string _imageUrl
+    address indexed _token, uint256 _claimDeadline, uint256 _totalClaimable, string _galxeCampaignId, string _imageUrl
   );
   event ResetCountdown(address indexed _token, uint256 _newClaimDeadline);
   event TokenCollected(address indexed _token, address indexed _walletAddress, uint256 _timestamp);
 
-  bool private _useNftGated = false;
+  // To iterate over the list of addresses and also distinguish between XERC20 and XERC721
+  // we use two different maps, one for each type of token.
+  // This way we can iterate over the list of addresses just traversing from index 0 to map.length()
+  // as key, and each address as value.
 
-  EnumerableMap.UintToAddressMap private _listedXERC20Tokens;
-  EnumerableMap.UintToAddressMap private _listedXERC721Tokens;
+  /**
+   * @notice Map to store the addresses of listed xERC20 tokens
+   * @dev The key represents the index, and the value is the token address
+   */
+  EnumerableMap.UintToAddressMap private _xerc20Addresses;
 
-  mapping(address token => XERC20Listing) public listingsXERC20;
-  mapping(address token => XERC721Listing) public listingsXERC721;
+  /**
+   * @notice Map to store the addresses of listed xERC721 tokens
+   * @dev The key represents the index, and the value is the token address
+   */
+  EnumerableMap.UintToAddressMap private _xerc721Addresses;
 
+  /**
+   * @notice Map to store the details of listed xERC20 and xERC721 tokens
+   * @dev The key represents the token address, and the value is the listing details
+   */
+  mapping(address token => Listing) public listedTokenDetails;
+
+  /**
+   * @notice For a pair of token/walletAddress, stores the timestamp of the last claim
+   * @dev Every claim should happen only once. A timestamp 0 is considered as not claimed
+   */
   mapping(address token => mapping(address walletAddress => uint256 timestamp)) public claimedWallets;
 
   modifier onlyOwner() {
@@ -63,29 +79,32 @@ contract OmniNetworkEscrow is AccessControl {
     _;
   }
 
+  modifier onlyRelayer() {
+    if (!hasRole(RELAYER_ROLE, msg.sender)) {
+      revert AccessControl_CallerNotRelayer();
+    }
+    _;
+  }
+
   constructor(address _relayer) {
     _grantRole(OWNER_ROLE, msg.sender);
     _grantRole(RELAYER_ROLE, _relayer);
   }
 
-  /**
-   * @notice Lists a XERC20 token
-   * @dev Can only be called by the owner
-   * @param _token The address of the XERC20 token
-   * @param _claimDeadline The deadline for claiming the tokens
-   * @param _totalClaimable The total amount of tokens that can be claimed
-   * @param _nftGated The address of the NFT that is required to claim the tokens (can be zeroAddress if no NFT is required)
-   * @param _imageUrl The url of the logo
-   */
-  function listXERC20Token(
+  function grantRelayerRole(address _relayer) public onlyOwner {
+    _grantRole(RELAYER_ROLE, _relayer);
+  }
+
+  function _listToken(
+    TokenType _tokenType,
     address _token,
     uint256 _claimDeadline,
     uint256 _totalClaimable,
-    address _nftGated,
+    string memory _galxeCampaignId,
     string memory _imageUrl
-  ) public onlyOwner {
+  ) private {
     // check if already listed
-    if (listingsXERC20[_token].totalClaimable != uint256(0)) {
+    if (listedTokenDetails[_token].claimDeadline != uint256(0)) {
       revert OmniEscrow_AlreadyListed();
     }
 
@@ -99,91 +118,90 @@ contract OmniNetworkEscrow is AccessControl {
       revert OmniEscrow_TotalClaimableBiggerThanZero();
     }
 
-    // create listing
-    listingsXERC20[_token] = XERC20Listing({
+    listedTokenDetails[_token] = Listing({
+      tokenType: _tokenType,
       claimDeadline: _claimDeadline,
       totalClaimable: _totalClaimable,
-      nftGated: _nftGated,
+      galxeCampaignId: _galxeCampaignId,
       totalClaimedWallets: uint256(0),
       imageUrl: _imageUrl
     });
+  }
 
-    // set token as listed
-    _listedXERC20Tokens.set(_listedXERC20Tokens.length(), _token);
+  function _isXERC721Token(address _token) private view returns (bool _isXERC721) {
+    (bool _supportsInterface,) =
+      address(_token).staticcall(abi.encodeWithSignature('supportsInterface(bytes4)', type(IXERC721).interfaceId));
 
-    emit TokenListed(_token, _claimDeadline, _totalClaimable, _nftGated, _imageUrl);
+    return _supportsInterface;
+  }
+
+  function _isXERC20Token(address _token) private view returns (bool _isXERC20) {
+    (bool _decimals,) = address(_token).staticcall(abi.encodeWithSignature('decimals()'));
+
+    return _decimals;
   }
 
   /**
    * @notice Lists a XERC721 token
    * @dev Can only be called by the owner
-   * @param _token The address of the XERC20 token
+   * @param _token The address of the XERC721 token
    * @param _claimDeadline The deadline for claiming the tokens
-   * @param _nftGated The address of the NFT that is required to claim the tokens (can be zeroAddress if no NFT is required)
+   * @param _galxeCampaignId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
    * @param _imageUrl The url of the logo
    */
   function listXERC721Token(
     address _token,
     uint256 _claimDeadline,
-    address _nftGated,
+    string memory _galxeCampaignId,
     string memory _imageUrl
   ) public onlyOwner {
-    // check if already listed
-    if (listingsXERC721[_token].claimDeadline != uint256(0)) {
-      revert OmniEscrow_AlreadyListed();
+    if (!_isXERC721Token(_token)) {
+      revert InvalidToken();
     }
 
-    // check if deadline is in the future
-    if (block.timestamp >= _claimDeadline) {
-      revert OmniEscrow_DeadlineMustBeInTheFuture();
-    }
+    _listToken(TokenType.XERC721, _token, _claimDeadline, 1, _galxeCampaignId, _imageUrl);
 
-    // create listing
-    listingsXERC721[_token] = XERC721Listing({
-      claimDeadline: _claimDeadline,
-      tokenId: Counters.Counter(1),
-      nftGated: _nftGated,
-      totalClaimedWallets: uint256(0),
-      imageUrl: _imageUrl
-    });
+    _xerc721Addresses.set(_xerc721Addresses.length(), _token);
 
-    // set token as listed
-    _listedXERC721Tokens.set(_listedXERC721Tokens.length(), _token);
-
-    emit TokenListed(_token, _claimDeadline, 1, _nftGated, _imageUrl);
+    emit TokenListed(_token, _claimDeadline, 1, _galxeCampaignId, _imageUrl);
   }
 
   /**
-   * @notice Reset countdown for a XERC20 token
+   * @notice Lists a XERC20 token
    * @dev Can only be called by the owner
    * @param _token The address of the XERC20 token
-   * @param _newClaimDeadline The deadline for claiming the tokens
+   * @param _claimDeadline The deadline for claiming the tokens
+   * @param _totalClaimable The total amount of tokens that can be claimed
+   * @param _galxeCampaignId The campaign id for the NFT that is required to claim the tokens (can be empty string if no NFT is required)
+   * @param _imageUrl The url of the logo
    */
-  function resetCountdownListedTokenXERC20(address _token, uint256 _newClaimDeadline) public onlyOwner {
-    // check if is listed
-    if (listingsXERC20[_token].claimDeadline == uint256(0)) {
-      revert OmniEscrow_NotListed();
+  function listXERC20Token(
+    address _token,
+    uint256 _claimDeadline,
+    uint256 _totalClaimable,
+    string memory _galxeCampaignId,
+    string memory _imageUrl
+  ) public onlyOwner {
+    if (!_isXERC20Token(_token)) {
+      revert InvalidToken();
     }
 
-    // check if deadline is in the future
-    if (block.timestamp >= _newClaimDeadline) {
-      revert OmniEscrow_DeadlineMustBeInTheFuture();
-    }
+    _listToken(TokenType.XERC20, _token, _claimDeadline, _totalClaimable, _galxeCampaignId, _imageUrl);
 
-    listingsXERC20[_token].claimDeadline = _newClaimDeadline;
+    _xerc20Addresses.set(_xerc20Addresses.length(), _token);
 
-    emit ResetCountdown(_token, _newClaimDeadline);
+    emit TokenListed(_token, _claimDeadline, _totalClaimable, _galxeCampaignId, _imageUrl);
   }
 
   /**
-   * @notice Reset countdown for a XERC721 token
+   * @notice Reset countdown for a token
    * @dev Can only be called by the owner
-   * @param _token The address of the XERC721 token
+   * @param _token The address of the  token
    * @param _newClaimDeadline The deadline for claiming the tokens
    */
-  function resetCountdownListedTokenXERC721(address _token, uint256 _newClaimDeadline) public onlyOwner {
+  function resetCountdownOfListedToken(address _token, uint256 _newClaimDeadline) public onlyOwner {
     // check if is listed
-    if (listingsXERC721[_token].claimDeadline == uint256(0)) {
+    if (listedTokenDetails[_token].claimDeadline == uint256(0)) {
       revert OmniEscrow_NotListed();
     }
 
@@ -192,7 +210,7 @@ contract OmniNetworkEscrow is AccessControl {
       revert OmniEscrow_DeadlineMustBeInTheFuture();
     }
 
-    listingsXERC721[_token].claimDeadline = _newClaimDeadline;
+    listedTokenDetails[_token].claimDeadline = _newClaimDeadline;
 
     emit ResetCountdown(_token, _newClaimDeadline);
   }
@@ -200,62 +218,65 @@ contract OmniNetworkEscrow is AccessControl {
   /**
    * @dev Collects the specified token from the contract and transfers it to the caller.
    * @param _token The address of the token to be collected.
+   * @param _receiver The address of the token to be collected.
    */
-  function collectXERC20(address _token) public {
-    // check if the caller has already claimed the tokens
-    if (claimedWallets[_token][msg.sender] != uint256(0)) {
+  function collectXERC20(address _token, address _receiver) public onlyRelayer {
+    // check if the receiver has already claimed the tokens
+    if (claimedWallets[_token][_receiver] != uint256(0)) {
       revert OmniEscrow_AlreadyClaimed();
     }
 
     // check if the deadline has passed
-    if (block.timestamp > listingsXERC20[_token].claimDeadline) {
+    if (block.timestamp > listedTokenDetails[_token].claimDeadline) {
       revert OmniEscrow_DeadlineMustBeInTheFuture();
     }
 
-    // check if the caller has the required NFT
-    if (listingsXERC20[_token].nftGated != address(0) && _useNftGated) {
-      if (ERC721(listingsXERC20[_token].nftGated).balanceOf(msg.sender) > 0) {
-        revert OmniEscrow_NFTGatedBalanceIsZero();
-      }
-    }
+    listedTokenDetails[_token].totalClaimedWallets += 1;
+    claimedWallets[_token][_receiver] = block.timestamp;
 
-    listingsXERC20[_token].totalClaimedWallets += 1;
-    claimedWallets[_token][msg.sender] = block.timestamp;
-    IXERC20(_token).mint(msg.sender, listingsXERC20[_token].totalClaimable);
+    IXERC20(_token).mint(_receiver, listedTokenDetails[_token].totalClaimable);
 
-    emit TokenCollected(_token, msg.sender, block.timestamp);
+    emit TokenCollected(_token, _receiver, block.timestamp);
   }
 
   /**
    * @dev Collects the specified token from the contract and transfers it to the caller.
    * @param _token The address of the token to be collected.
+   * @param _receiver The address of the token to be collected.
    */
-  function collectXERC721(address _token) public {
-    // check if the caller has already claimed the tokens
-    if (claimedWallets[_token][msg.sender] != uint256(0)) {
+  function collectXERC721(address _token, address _receiver) public onlyRelayer {
+    // check if the receiver has already claimed the tokens
+    if (claimedWallets[_token][_receiver] != uint256(0)) {
       revert OmniEscrow_AlreadyClaimed();
     }
 
     // check if the deadline has passed
-    if (block.timestamp > listingsXERC721[_token].claimDeadline) {
+    if (block.timestamp > listedTokenDetails[_token].claimDeadline) {
       revert OmniEscrow_DeadlineMustBeInTheFuture();
     }
 
-    // check if the caller has the required NFT
-    if (listingsXERC721[_token].nftGated != address(0) && _useNftGated) {
-      if (ERC721(listingsXERC721[_token].nftGated).balanceOf(msg.sender) > 0) {
-        revert OmniEscrow_NFTGatedBalanceIsZero();
-      }
-    }
+    IXERC721(_token).mint(_receiver, '');
 
-    listingsXERC721[_token].totalClaimedWallets += 1;
-    claimedWallets[_token][msg.sender] = block.timestamp;
-    uint256 _id = listingsXERC721[_token].tokenId.current();
-    IXERC721(_token).mint(msg.sender, _id, '');
+    listedTokenDetails[_token].totalClaimedWallets += 1;
+    claimedWallets[_token][_receiver] = block.timestamp;
 
-    listingsXERC721[_token].tokenId.increment();
+    emit TokenCollected(_token, _receiver, block.timestamp);
+  }
 
-    emit TokenCollected(_token, msg.sender, block.timestamp);
+  /**
+   * @notice Returns the number of listed xERC20 tokens
+   * @return _xerc20Count The number of listed xERC20 tokens
+   */
+  function getXERC20TokenCount() public view returns (uint256 _xerc20Count) {
+    return _xerc20Addresses.length();
+  }
+
+  /**
+   * @notice Returns the number of listed xERC721 tokens
+   * @return _xerc721Count The number of listed xERC721 tokens
+   */
+  function getXERC721TokenCount() public view returns (uint256 _xerc721Count) {
+    return _xerc721Addresses.length();
   }
 
   /**
@@ -264,15 +285,7 @@ contract OmniNetworkEscrow is AccessControl {
    * @return _xerc20AtIndex The address of the token
    */
   function getXERC20TokenAtIndex(uint256 _index) public view returns (address _xerc20AtIndex) {
-    return _listedXERC20Tokens.get(_index);
-  }
-
-  /**
-   * @notice Returns the number of listed tokens
-   * @return _xerc20Count The number of listed tokens
-   */
-  function getListingXERC20Count() public view returns (uint256 _xerc20Count) {
-    return _listedXERC20Tokens.length();
+    return _xerc20Addresses.get(_index);
   }
 
   /**
@@ -281,22 +294,6 @@ contract OmniNetworkEscrow is AccessControl {
    * @return _xerc721AtIndex The address of the token
    */
   function getXERC721TokenAtIndex(uint256 _index) public view returns (address _xerc721AtIndex) {
-    return _listedXERC721Tokens.get(_index);
-  }
-
-  /**
-   * @notice Returns the number of listed tokens
-   * @return _xerc721Count The number of listed tokens
-   */
-  function getListingXERC721Count() public view returns (uint256 _xerc721Count) {
-    return _listedXERC721Tokens.length();
-  }
-
-  /**
-   * @notice Set useNftGated onchain
-   * @param _nftGated Whether to use NFT gating.
-   */
-  function setUseNftGated(bool _nftGated) public onlyOwner {
-    _useNftGated = _nftGated;
+    return _xerc721Addresses.get(_index);
   }
 }

@@ -6,8 +6,11 @@ import {ERC721URIStorage} from '@openzeppelin/contracts/token/ERC721/extensions/
 
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {Counters} from '@openzeppelin/contracts/utils/Counters.sol';
 
 contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
+  using Counters for Counters.Counter;
+
   /**
    * @notice The duration it takes for the limits to fully replenish
    */
@@ -27,6 +30,11 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
    * @notice Maps bridge address to bridge configurations
    */
   mapping(address => Bridge) public bridges;
+
+  /**
+   * @notice Counter to autoincrement tokenIds on minting
+   */
+  Counters.Counter private _lastTokenId;
 
   /**
    * @notice Constructs the initial config of the XERC721
@@ -68,23 +76,21 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
    * @notice Mints a non-fungible token to a user
    * @dev Can only be called by a bridge
    * @param _user The address of the user to receive the minted non-fungible token
-   * @param _tokenId The specific non-fungible token to mint
    * @param _tokenURI The metadata corresponding to the non-fungible token
    */
-  function mint(address _user, uint256 _tokenId, string memory _tokenURI) external {
-    _mintWithCaller(msg.sender, _user, _tokenId, _tokenURI);
+  function mint(address _user, string memory _tokenURI) external {
+    _mintWithCaller(msg.sender, _user, _tokenURI);
   }
 
   /**
    * @notice Mints batch of non-fungible tokens to a user
    * @dev Can only be called by a bridge
    * @param _user The address of the user who needs tokens minted
-   * @param _tokenIdList The list of specific tokens to mint to a user
    * @param _tokenURIList The list of metadata for each individual token
    */
-  function mintBatch(address _user, uint256[] calldata _tokenIdList, string[] calldata _tokenURIList) external {
-    for (uint256 _i = 0; _i < _tokenIdList.length; _i++) {
-      _mintWithCaller(msg.sender, _user, _tokenIdList[_i], _tokenURIList[_i]);
+  function mintBatch(address _user, string[] calldata _tokenURIList) external {
+    for (uint256 _i = 0; _i < _tokenURIList.length; _i++) {
+      _mintWithCaller(msg.sender, _user, _tokenURIList[_i]);
     }
   }
 
@@ -275,7 +281,6 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
    * @param _tokenId The tokenId to burn
    */
   function _burnWithCaller(address _caller, address _user, uint256 _tokenId) internal {
-    // FIXME CHECK
     if (!_isApprovedOrOwner(_user, _tokenId)) {
       revert IXERC721_NotAllowedToBurn();
     }
@@ -294,16 +299,17 @@ contract XERC721 is ERC721URIStorage, Ownable, IXERC721 {
    *
    * @param _caller The caller address
    * @param _user The user address
-   * @param _tokenId The tokenId to mint
    */
-  function _mintWithCaller(address _caller, address _user, uint256 _tokenId, string memory _tokenURI) internal {
+  function _mintWithCaller(address _caller, address _user, string memory _tokenURI) internal {
     if (_caller != lockbox) {
       uint256 _currentLimit = mintingCurrentLimitOf(_caller);
       if (_currentLimit < 1) revert IXERC721_NotHighEnoughLimits();
       _useMinterLimits(_caller, 1);
     }
 
-    _mint(_user, _tokenId);
-    _setTokenURI(_tokenId, _tokenURI);
+    uint256 _newId = _lastTokenId.current();
+    _mint(_user, _newId);
+    _setTokenURI(_newId, _tokenURI);
+    _lastTokenId.increment();
   }
 }

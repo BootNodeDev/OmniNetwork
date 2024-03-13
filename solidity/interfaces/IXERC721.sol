@@ -93,19 +93,17 @@ interface IXERC721 {
    * @notice Mints a non-fungible token to a user
    * @dev Can only be called by a bridge
    * @param _user The address of the user to receive the minted non-fungible token
-   * @param _tokenId The specific non-fungible token to mint
    * @param _tokenURI The metadata corresponding to the non-fungible token
    */
-  function mint(address _user, uint256 _tokenId, string memory _tokenURI) external;
+  function mint(address _user, string memory _tokenURI) external;
 
   /**
    * @notice Mints batch of non-fungible tokens to a user
    * @dev Can only be called by a bridge
    * @param _user The address of the user who needs tokens minted
-   * @param _tokenIdList The list of specific tokens to mint to a user
    * @param _tokenURIList The list of metadata for each individual token
    */
-  function mintBatch(address _user, uint256[] calldata _tokenIdList, string[] calldata _tokenURIList) external;
+  function mintBatch(address _user, string[] calldata _tokenURIList) external;
 
   /**
    * @notice Burns a non-fungible token for a user
