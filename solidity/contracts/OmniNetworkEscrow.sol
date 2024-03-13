@@ -216,6 +216,28 @@ contract OmniNetworkEscrow is AccessControl {
   }
 
   /**
+   * @notice Reset countdown for a token
+   * @dev Can only be called by the owner
+   * @param _token The address of the XERC20 token
+   * @param _newClaimDeadline The deadline for claiming the tokens
+   */
+  function resetCountdownListToken(address _token, uint256 _newClaimDeadline) public onlyOwner {
+    // check if already listed
+    if (listings[_token].totalClaimable == uint256(0)) {
+      revert OmniEscrow_NotListed();
+    }
+
+    // check if deadline is in the future
+    if (block.timestamp >= _newClaimDeadline) {
+      revert OmniEscrow_DeadlineMustBeInTheFuture();
+    }
+
+    listings[_token].claimDeadline = _newClaimDeadline;
+
+    emit ResetCountdown(_token);
+  }
+
+  /**
    * @dev Collects the specified token from the contract and transfers it to the caller.
    * @param _token The address of the token to be collected.
    * @param _receiver The address of the token to be collected.
