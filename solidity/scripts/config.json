@@ -1,19 +1,19 @@
 {
-  "bridge": "0xf57C0f4ff755cD9e58B59dC14f007233F6334e02",
+  "bridge": "0xc2593fd6ffe7e3c0e6f7e6d0dc0eebe5b556ff10",
   "burnLimit": 1000e18,
-  "governor": "0x6e4998b3bC9554E7c49B4da1c7c143F595F0B2C3",
+  "governor": "0x9315965ba9B812Fb02391dA2B59468a1097EaE6C",
   "mintLimit": 1000e18,
-  "relayerAddress": "0x0000000000000000000000000000000000000000",
-  "rpcEnvName": "ETHEREUM_SEPOLIA_RPC",
+  "relayerAddress": "0x87d5C1c23C8655FdE15817205eB17860AA2fCC79",
+  "rpcEnvName": "ARBITRUM_SEPOLIA_RPC",
   "testXERC20": {
-    "erc20": "0x0000000000000000000000000000000000000000",
+    "erc20": "0x578e3119EDAD58Af72b704197DD1198cF891DAfc",
     "factory": "0xd1419Eb907aaF9894E7b2c603d9039e9C5c7ED79",
     "isNativeGasToken": false,
     "name": "TestXERC20",
     "symbol": "TST"
   },
   "testXERC721": {
-    "factory": "0x0000000000000000000000000000000000000000",
+    "factory": "0x4ed0621c953e48C0219611e57A4186fEAEDcF6Ac",
     "name": "TestXERC721",
     "symbol": "TST"
   }
