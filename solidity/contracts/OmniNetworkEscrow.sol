@@ -94,6 +94,10 @@ contract OmniNetworkEscrow is AccessControl {
     _grantRole(RELAYER_ROLE, _relayer);
   }
 
+  function grantOwnerRole(address _owner) public onlyOwner {
+    _grantRole(OWNER_ROLE, _owner);
+  }
+
   function _listToken(
     TokenType _tokenType,
     address _token,
