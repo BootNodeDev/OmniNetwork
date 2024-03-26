@@ -85,8 +85,8 @@ contract OmniNetworkEscrow is AccessControl {
     _;
   }
 
-  constructor(address _relayer) {
-    _grantRole(OWNER_ROLE, msg.sender);
+  constructor(address _relayer, address _owner) {
+    _grantRole(OWNER_ROLE, _owner);
     _grantRole(RELAYER_ROLE, _relayer);
   }
 

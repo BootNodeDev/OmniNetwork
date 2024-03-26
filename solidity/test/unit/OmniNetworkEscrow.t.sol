@@ -39,7 +39,7 @@ abstract contract Base is Test {
     bridges[0] = address(_escrow);
 
     _xerc20 = XERC20(_xerc20Factory.deployXERC20('Test', 'TST', limits, limits, bridges));
-    _escrow = new OmniNetworkEscrow(_owner);
+    _escrow = new OmniNetworkEscrow(_owner, _owner);
     _xerc20.setLimits(address(_escrow), 100, 100);
     vm.stopPrank();
   }

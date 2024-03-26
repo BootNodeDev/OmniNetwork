@@ -31,5 +31,5 @@ struct DeployDetails {
 
 ////////////////////////// MODIFY ////////////////////////////////
 // When new factories need to be deployed, make sure to update the salt version to avoid address collition
-string constant SALT = 'omni-v1.0';
+string constant SALT = 'omni-v1.1';
 //////////////////////////////////////////////////////////////////

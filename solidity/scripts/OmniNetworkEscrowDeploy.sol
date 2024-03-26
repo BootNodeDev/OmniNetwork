@@ -21,7 +21,7 @@ contract OmniNetworkEscrowDeploy is Script, ScriptingLibrary {
     vm.createSelectFork(vm.rpcUrl(vm.envString(_config.rpcEnvName)));
 
     vm.startBroadcast(deployer);
-    OmniNetworkEscrow _escrow = new OmniNetworkEscrow(_config.relayerAddress);
+    OmniNetworkEscrow _escrow = new OmniNetworkEscrow(_config.relayerAddress, _config.governor);
     vm.stopBroadcast();
 
     // solhint-disable-next-line no-console
