@@ -37,7 +37,6 @@
     "script:DeployXERC721Factory": "forge script solidity/scripts/XERC721FactoryDeploy.sol:XERC721FactoryDeploy --legacy --via-ir",
     "script:DeployXERC721Factory:broadcast": "forge script solidity/scripts/XERC721FactoryDeploy.sol:XERC721FactoryDeploy --legacy --broadcast --verify --slow --via-ir",
     "test": "forge test -vvv --via-ir",
-    "test:e2e": "forge test --match-contract E2E -vvv --via-ir",
     "test:unit": "forge test --match-contract Unit -vvv --via-ir",
     "test:unit:deep": "FOUNDRY_FUZZ_RUNS=5000 yarn test:unit --via-ir"
   },

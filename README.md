@@ -71,12 +71,6 @@ In order to run unit tests and run way more fuzzing than usual (5x), run:
 yarn test:unit:deep
 ```
 
-In order to just run e2e tests, run:
-
-```bash
-yarn test:e2e
-```
-
 In order to check your current code coverage, run:
 
 ```bash
